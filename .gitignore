@@ -1,0 +1,32 @@
+# Build and CMake artifacts
+build/
+bin/
+lib/
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# IDE / Editor files
+.vscode/
+.vs/
+*.user
+.idea/
+
+# Node / Web
+node_modules/
+dist/
+.env
+.env.local
+
+# Logs and DB
+*.log
+docker-data/
+postgres-data/
+redis-data/
