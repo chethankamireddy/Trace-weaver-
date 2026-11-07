@@ -1,0 +1,97 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "User Service API",
+    "version": "2.0.0",
+    "description": "User profile, authentication, and accounts management service (v2 breaking overhaul)"
+  },
+  "paths": {
+    "/api/v1/users/{id}": {
+      "get": {
+        "operationId": "getUserById",
+        "summary": "Retrieve user profile by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfile"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found"
+          }
+        }
+      }
+    },
+    "/api/v1/users": {
+      "post": {
+        "operationId": "createUser",
+        "summary": "Create a new user account",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfile"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UserProfile": {
+        "type": "object",
+        "required": ["id", "email", "fullName"],
+        "properties": {
+          "id": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "fullName": { "type": "string" },
+          "avatarUrl": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["ACTIVE", "PENDING"]
+          },
+          "tier": { "type": "integer" }
+        }
+      },
+      "CreateUserRequest": {
+        "type": "object",
+        "required": ["email", "fullName", "ageVerification"],
+        "properties": {
+          "email": { "type": "string" },
+          "fullName": { "type": "string" },
+          "ageVerification": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

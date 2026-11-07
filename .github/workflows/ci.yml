@@ -1,0 +1,47 @@
+name: TraceWeaver CI
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  build-and-test-core:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up GCC-14
+      run: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+        sudo apt-get update
+        sudo apt-get install -y g++-14 cmake ninja-build
+
+    - name: Configure CMake
+      run: |
+        cmake -B build -S . -G Ninja \
+          -DCMAKE_CXX_COMPILER=g++-14 \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DBUILD_STANDALONE_TESTS=ON
+
+    - name: Build C++ Core Engine
+      run: cmake --build build
+
+    - name: Run C++ Core Integration Test Suite
+      run: ./build/core/standalone_all_tests
+
+  verify-backend-and-contracts:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+
+    - name: Validate Backend Server Syntax
+      run: node -c backend/src/server.js

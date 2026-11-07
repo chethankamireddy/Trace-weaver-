@@ -1,0 +1,74 @@
+[
+  {
+    "testId": "tc_usr_01",
+    "name": "Verify User Profile Deserialization",
+    "description": "Tests consumer parsing of User Profile response payload",
+    "associatedServiceId": "srv_user",
+    "associatedOperationId": "getUserById",
+    "relatedSchemaFields": ["id", "name", "email"],
+    "type": "CONTRACT",
+    "priority": 1,
+    "executionDurationMs": 85.0,
+    "lastExecutionResult": "PASSED"
+  },
+  {
+    "testId": "tc_ord_01",
+    "name": "Order Service User Validation Flow",
+    "description": "Verifies Order Service can look up user details before placing order",
+    "associatedServiceId": "srv_order",
+    "associatedOperationId": "getUserById",
+    "relatedSchemaFields": ["name", "email"],
+    "type": "INTEGRATION",
+    "priority": 1,
+    "executionDurationMs": 240.0,
+    "lastExecutionResult": "FAILED"
+  },
+  {
+    "testId": "tc_rec_01",
+    "name": "Recommendation Engine User Persona Extraction",
+    "description": "Extracts user tier and status for personalized feeds",
+    "associatedServiceId": "srv_recommendation",
+    "associatedOperationId": "getUserById",
+    "relatedSchemaFields": ["tier", "status"],
+    "type": "REGRESSION",
+    "priority": 2,
+    "executionDurationMs": 310.0,
+    "lastExecutionResult": "PASSED"
+  },
+  {
+    "testId": "tc_notif_01",
+    "name": "Notification Dispatch Recipient Greeting",
+    "description": "Ensures user 'name' is formatted into outbound email welcome template",
+    "associatedServiceId": "srv_notification",
+    "associatedOperationId": "getUserById",
+    "relatedSchemaFields": ["name", "email"],
+    "type": "REGRESSION",
+    "priority": 2,
+    "executionDurationMs": 140.0,
+    "lastExecutionResult": "FAILED"
+  },
+  {
+    "testId": "tc_inv_01",
+    "name": "Inventory Reservation Lock Test",
+    "description": "Tests stock decrement when an order arrives",
+    "associatedServiceId": "srv_inventory",
+    "associatedOperationId": "reserveStock",
+    "relatedSchemaFields": ["sku", "quantity"],
+    "type": "UNIT",
+    "priority": 3,
+    "executionDurationMs": 95.0,
+    "lastExecutionResult": "PASSED"
+  },
+  {
+    "testId": "tc_e2e_checkout",
+    "name": "E2E Cart Checkout Full Journey",
+    "description": "End-to-end checkout with User -> Order -> Inventory -> Payment -> Notification",
+    "associatedServiceId": "srv_order",
+    "associatedOperationId": "createOrder",
+    "relatedSchemaFields": ["userId", "items"],
+    "type": "END_TO_END",
+    "priority": 1,
+    "executionDurationMs": 950.0,
+    "lastExecutionResult": "PASSED"
+  }
+]

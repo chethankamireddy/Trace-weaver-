@@ -1,0 +1,66 @@
+[
+  {
+    "recordingId": "rec_usr_001",
+    "serviceId": "srv_user",
+    "operationId": "getUserById",
+    "environment": "production",
+    "httpMethod": "GET",
+    "urlPath": "/api/v1/users/usr_1001",
+    "queryParameters": {},
+    "requestHeaders": {
+      "Authorization": "Bearer [REDACTED]",
+      "Accept": "application/json",
+      "X-Request-ID": "req_88291f0a"
+    },
+    "requestBody": "",
+    "responseStatus": 200,
+    "responseHeaders": {
+      "Content-Type": "application/json"
+    },
+    "responseBody": "{\"id\":\"usr_1001\",\"email\":\"alex@example.com\",\"name\":\"Alex Chen\",\"status\":\"ACTIVE\",\"tier\":\"gold\",\"timestamp\":\"2026-11-01T10:00:00Z\"}",
+    "latencyMs": 42.0,
+    "isSanitized": true
+  },
+  {
+    "recordingId": "rec_usr_002",
+    "serviceId": "srv_user",
+    "operationId": "getUserById",
+    "environment": "production",
+    "httpMethod": "GET",
+    "urlPath": "/api/v1/users/usr_1002",
+    "queryParameters": {},
+    "requestHeaders": {
+      "Authorization": "Bearer [REDACTED]",
+      "Accept": "application/json"
+    },
+    "requestBody": "",
+    "responseStatus": 200,
+    "responseHeaders": {
+      "Content-Type": "application/json"
+    },
+    "responseBody": "{\"id\":\"usr_1002\",\"email\":\"sarah@example.com\",\"name\":\"Sarah Connor\",\"status\":\"ACTIVE\",\"tier\":\"silver\",\"timestamp\":\"2026-11-01T10:02:00Z\"}",
+    "latencyMs": 38.0,
+    "isSanitized": true
+  },
+  {
+    "recordingId": "rec_ord_001",
+    "serviceId": "srv_order",
+    "operationId": "createOrder",
+    "environment": "production",
+    "httpMethod": "POST",
+    "urlPath": "/api/v1/orders",
+    "queryParameters": {},
+    "requestHeaders": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer [REDACTED]"
+    },
+    "requestBody": "{\"userId\":\"usr_1001\",\"items\":[{\"sku\":\"PROD_99\",\"quantity\":2}]}",
+    "responseStatus": 201,
+    "responseHeaders": {
+      "Content-Type": "application/json"
+    },
+    "responseBody": "{\"orderId\":\"ord_7712\",\"status\":\"CONFIRMED\",\"total\":149.99,\"timestamp\":\"2026-11-01T10:05:00Z\"}",
+    "latencyMs": 115.0,
+    "isSanitized": true
+  }
+]

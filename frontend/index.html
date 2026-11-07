@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TraceWeaver | API Change Impact Analysis & Regression Replay Platform</title>
+  <!-- Tailwind CSS CDN for instant, zero-install high-fidelity styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#312e81',
+            },
+            surface: {
+              900: '#0b0f19',
+              850: '#111827',
+              800: '#1e293b',
+              700: '#334155',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    code, pre, .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #111827;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body class="bg-surface-900 text-slate-100 min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
+
+  <!-- Top Navigation Header -->
+  <header class="border-b border-surface-800 bg-surface-900/90 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-brand-500/20 ring-1 ring-white/20">
+            <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div>
+            <span class="text-lg font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">TRACEWEAVER</span>
+            <span class="ml-2 text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-brand-900/60 border border-brand-500/30 text-brand-300">CORE v2.0</span>
+          </div>
+        </div>
+        <div class="hidden md:flex items-center space-x-2 pl-6 border-l border-surface-700/60">
+          <span class="text-xs text-slate-400 font-medium">Workspace:</span>
+          <select id="workspaceSelect" class="bg-surface-800 text-xs font-semibold text-slate-200 border border-surface-700 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-500">
+            <option>Retail E-Commerce Platform</option>
+            <option>Fintech Core Gateway</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Engine Online (C++20)</span>
+        </div>
+        <button onclick="runNewAnalysis()" class="flex items-center space-x-2 px-3.5 py-1.5 text-xs font-semibold bg-brand-600 hover:bg-brand-500 active:scale-95 transition-all text-white rounded-lg shadow-sm shadow-brand-600/30">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+          <span>Run Impact Analysis</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="flex-1 flex max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 gap-6">
+
+    <!-- Navigation Sidebar -->
+    <aside class="w-64 flex-shrink-0">
+      <nav class="space-y-1 bg-surface-850 p-2 rounded-2xl border border-surface-800">
+        <button onclick="showTab('overview')" id="nav-overview" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-medium bg-brand-600/20 text-brand-300 border border-brand-500/30">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          <span>System Overview</span>
+        </button>
+        <button onclick="showTab('services')" id="nav-services" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-surface-800 transition">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+          <span>Services Registry</span>
+        </button>
+        <button onclick="showTab('graph')" id="nav-graph" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-surface-800 transition">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+          <span>Dependency Graph</span>
+        </button>
+        <button onclick="showTab('diff')" id="nav-diff" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-surface-800 transition">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+          <span>Change Analysis Diff</span>
+        </button>
+        <button onclick="showTab('risk')" id="nav-risk" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-surface-800 transition">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          <span>Risk Assessment</span>
+        </button>
+        <button onclick="showTab('tests')" id="nav-tests" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-surface-800 transition">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>Selective Tests</span>
+        </button>
+        <button onclick="showTab('replay')" id="nav-replay" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-surface-800 transition">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <span>Request Replay</span>
+        </button>
+        <button onclick="showTab('github')" id="nav-github" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-surface-800 transition">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+          <span>GitHub CI Bot</span>
+        </button>
+      </nav>
+
+      <!-- Active Service Spec Card -->
+      <div class="mt-4 p-4 rounded-2xl bg-surface-850 border border-surface-800">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Active Run</span>
+          <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">HIGH RISK</span>
+        </div>
+        <div class="text-sm font-bold text-white">User Service</div>
+        <div class="text-xs font-mono text-slate-400 mt-1">v1.0.0 &rarr; v2.0.0 (breaking)</div>
+        <div class="mt-3 pt-3 border-t border-surface-700/60 flex items-center justify-between text-xs">
+          <span class="text-slate-400">Blast Radius:</span>
+          <span class="text-rose-400 font-semibold font-mono">3 Services, 1 Client</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 min-w-0">
+
+      <!-- TAB: Overview -->
+      <div id="tab-overview" class="tab-pane space-y-6">
+        <!-- Metrics Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="p-5 rounded-2xl bg-surface-850 border border-surface-800">
+            <div class="text-xs font-medium text-slate-400">Microservices</div>
+            <div class="text-3xl font-extrabold text-white mt-2">7</div>
+            <div class="text-xs text-emerald-400 font-medium mt-1">Production catalog indexed</div>
+          </div>
+          <div class="p-5 rounded-2xl bg-surface-850 border border-surface-800">
+            <div class="text-xs font-medium text-slate-400">API Operations</div>
+            <div class="text-3xl font-extrabold text-white mt-2">28</div>
+            <div class="text-xs text-slate-400 font-medium mt-1">Normalized contract schemas</div>
+          </div>
+          <div class="p-5 rounded-2xl bg-surface-850 border border-surface-800">
+            <div class="text-xs font-medium text-slate-400">Breaking Changes</div>
+            <div class="text-3xl font-extrabold text-rose-500 mt-2">3</div>
+            <div class="text-xs text-rose-400 font-medium mt-1">1 field removed, 1 type changed</div>
+          </div>
+          <div class="p-5 rounded-2xl bg-surface-850 border border-surface-800">
+            <div class="text-xs font-medium text-slate-400">Risk Score</div>
+            <div class="text-3xl font-extrabold text-amber-400 mt-2">84.5<span class="text-xs font-normal text-slate-400">/100</span></div>
+            <div class="text-xs text-amber-400 font-medium mt-1">Deployment Blocked</div>
+          </div>
+        </div>
+
+        <!-- Latest Analysis Run Card -->
+        <div class="p-6 rounded-2xl bg-surface-850 border border-surface-800">
+          <div class="flex items-center justify-between pb-4 border-b border-surface-700/60">
+            <div>
+              <h2 class="text-base font-bold text-white">Latest Change Impact Evaluation</h2>
+              <p class="text-xs text-slate-400 mt-0.5">Automated diff between User Service commit #8f12a and main branch</p>
+            </div>
+            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/30">
+              🚨 3 Breaking Contract Mutatons
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+            <div class="p-4 rounded-xl bg-surface-900 border border-surface-800">
+              <span class="text-xs text-slate-400 font-medium">Impact Traversal (Blast Radius)</span>
+              <div class="mt-2 text-sm font-semibold text-white">Order Service &rarr; Notification Service</div>
+              <p class="text-xs text-slate-400 mt-1">Downstream consumers reading removed <code class="text-rose-400">UserProfile.name</code> will fail.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-surface-900 border border-surface-800">
+              <span class="text-xs text-slate-400 font-medium">Selective Test Optimization</span>
+              <div class="mt-2 text-sm font-semibold text-white">4 of 6 Tests Selected (67%)</div>
+              <p class="text-xs text-slate-400 mt-1">Saved 495ms execution duration while guaranteeing 100% impact coverage.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-surface-900 border border-surface-800">
+              <span class="text-xs text-slate-400 font-medium">Regression Replay Verdict</span>
+              <div class="mt-2 text-sm font-semibold text-rose-400">2 Confirmed Failures</div>
+              <p class="text-xs text-slate-400 mt-1">Replaying historical production traffic confirmed missing field payload error.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Services -->
+      <div id="tab-services" class="tab-pane hidden space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-white">Microservice Registry</h2>
+            <p class="text-xs text-slate-400">All registered services, criticality levels, and API contract versions</p>
+          </div>
+        </div>
+        <div id="servicesList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- TAB: Dependency Graph -->
+      <div id="tab-graph" class="tab-pane hidden space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-white">Interactive Dependency Graph</h2>
+            <p class="text-xs text-slate-400">Directed multi-tier graph connecting services, operations, and clients</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button onclick="highlightImpactPath()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-600/20 text-rose-400 border border-rose-500/30 hover:bg-rose-600/30 transition">
+              Highlight Blast Radius
+            </button>
+            <button onclick="resetGraph()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface-800 text-slate-300 border border-surface-700 hover:bg-surface-700 transition">
+              Reset View
+            </button>
+          </div>
+        </div>
+
+        <!-- Graph Canvas Container -->
+        <div class="relative w-full h-[550px] rounded-2xl bg-surface-850 border border-surface-800 overflow-hidden flex">
+          <svg id="dependencySvg" class="w-full h-full cursor-grab active:cursor-grabbing"></svg>
+          
+          <!-- Node Inspector Side Panel -->
+          <div id="nodeInspector" class="absolute top-4 right-4 w-72 p-4 rounded-xl bg-surface-900/95 backdrop-blur border border-surface-700 shadow-xl hidden">
+            <div class="flex items-center justify-between pb-2 border-b border-surface-800">
+              <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Node Inspector</span>
+              <button onclick="closeInspector()" class="text-slate-400 hover:text-white">&times;</button>
+            </div>
+            <div id="inspectorContent" class="mt-3 text-xs space-y-2">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Legend -->
+          <div class="absolute bottom-4 left-4 p-3 rounded-xl bg-surface-900/90 backdrop-blur border border-surface-800 text-[11px] space-y-1.5">
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-indigo-500"></span>
+              <span class="text-slate-300">Service</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-cyan-500"></span>
+              <span class="text-slate-300">API Operation</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+              <span class="text-slate-300">Client Consumer</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-rose-500 animate-pulse"></span>
+              <span class="text-rose-400 font-semibold">Impacted in Blast Radius</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Change Diff -->
+      <div id="tab-diff" class="tab-pane hidden space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-white">API Contract Diff Engine</h2>
+            <p class="text-xs text-slate-400">Deterministic rule-based comparison between v1.0.0 and v2.0.0</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <select id="diffFilter" onchange="filterDiffChanges()" class="bg-surface-800 text-xs font-semibold text-slate-200 border border-surface-700 rounded-lg px-2.5 py-1.5 focus:outline-none">
+              <option value="ALL">All Changes (5)</option>
+              <option value="BREAKING">Breaking Only (3)</option>
+              <option value="NON_BREAKING">Non-Breaking (1)</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="diffChangesContainer" class="space-y-3">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- TAB: Risk Assessment -->
+      <div id="tab-risk" class="tab-pane hidden space-y-6">
+        <div class="p-6 rounded-2xl bg-surface-850 border border-surface-800 flex items-center justify-between">
+          <div>
+            <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Explainable Risk Score</span>
+            <div class="flex items-baseline space-x-3 mt-1">
+              <span class="text-5xl font-black text-rose-500">84.5</span>
+              <span class="text-lg text-slate-400 font-semibold">/ 100</span>
+              <span class="px-3 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30">
+                CRITICAL / HIGH RISK
+              </span>
+            </div>
+            <p class="text-xs text-slate-400 mt-2 max-w-xl">
+              Calculation based on 3 breaking mutations, 2-tier transitive blast radius traversal across critical services, and 2 confirmed replay regression failures.
+            </p>
+          </div>
+          <div class="w-36 h-36 flex items-center justify-center relative">
+            <svg class="w-32 h-32 transform -rotate-90">
+              <circle cx="64" cy="64" r="50" stroke="#1e293b" stroke-width="10" fill="transparent"/>
+              <circle cx="64" cy="64" r="50" stroke="#f43f5e" stroke-width="10" stroke-dasharray="314" stroke-dashoffset="48" stroke-linecap="round" fill="transparent"/>
+            </svg>
+            <span class="absolute font-mono font-bold text-xl text-white">84.5%</span>
+          </div>
+        </div>
+
+        <!-- Breakdown Factor Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-4 rounded-xl bg-surface-850 border border-surface-800">
+            <div class="flex justify-between items-center text-xs font-semibold">
+              <span class="text-slate-300">Change Severity Factor</span>
+              <span class="text-rose-400 font-mono">30.0 / 30 pts</span>
+            </div>
+            <div class="w-full bg-surface-900 rounded-full h-2 mt-2">
+              <div class="bg-rose-500 h-2 rounded-full" style="width: 100%"></div>
+            </div>
+            <p class="text-xs text-slate-400 mt-2">Max penalty incurred due to removed response field and mutated primitive type.</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-surface-850 border border-surface-800">
+            <div class="flex justify-between items-center text-xs font-semibold">
+              <span class="text-slate-300">Impact Breadth Factor</span>
+              <span class="text-amber-400 font-mono">23.0 / 25 pts</span>
+            </div>
+            <div class="w-full bg-surface-900 rounded-full h-2 mt-2">
+              <div class="bg-amber-400 h-2 rounded-full" style="width: 92%"></div>
+            </div>
+            <p class="text-xs text-slate-400 mt-2">3 downstream microservices + 1 client app within blast radius.</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-surface-850 border border-surface-800">
+            <div class="flex justify-between items-center text-xs font-semibold">
+              <span class="text-slate-300">Dependency Depth Factor</span>
+              <span class="text-amber-400 font-mono">10.0 / 15 pts</span>
+            </div>
+            <div class="w-full bg-surface-900 rounded-full h-2 mt-2">
+              <div class="bg-amber-400 h-2 rounded-full" style="width: 66%"></div>
+            </div>
+            <p class="text-xs text-slate-400 mt-2">Max depth 2 hops (User &rarr; Order &rarr; Notification).</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-surface-850 border border-surface-800">
+            <div class="flex justify-between items-center text-xs font-semibold">
+              <span class="text-slate-300">Regression Failure Factor</span>
+              <span class="text-rose-400 font-mono">10.0 / 15 pts</span>
+            </div>
+            <div class="w-full bg-surface-900 rounded-full h-2 mt-2">
+              <div class="bg-rose-500 h-2 rounded-full" style="width: 66%"></div>
+            </div>
+            <p class="text-xs text-slate-400 mt-2">Confirmed regression: 2 historical requests failed deserialization.</p>
+          </div>
+        </div>
+
+        <!-- Actionable Recommendations -->
+        <div class="p-5 rounded-2xl bg-surface-850 border border-surface-800 space-y-3">
+          <h3 class="text-sm font-bold text-white">Recommended Engineering Actions</h3>
+          <ul class="text-xs text-slate-300 space-y-2">
+            <li class="flex items-start space-x-2">
+              <span class="text-rose-400 font-bold">&#x2716;</span>
+              <span><strong>Block Automated Deployment:</strong> Do not merge PR #42 without downstream contract migration.</span>
+            </li>
+            <li class="flex items-start space-x-2">
+              <span class="text-amber-400 font-bold">&#x26A0;</span>
+              <span><strong>Backward-Compatibility Window:</strong> Provide an API transition phase returning both <code class="text-amber-300">name</code> and <code class="text-amber-300">fullName</code>.</span>
+            </li>
+            <li class="flex items-start space-x-2">
+              <span class="text-indigo-400 font-bold">&#x2714;</span>
+              <span><strong>Notify Stakeholders:</strong> Tag maintainers of <code class="text-indigo-300">order-service</code> and <code class="text-indigo-300">notification-service</code>.</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- TAB: Selective Tests -->
+      <div id="tab-tests" class="tab-pane hidden space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-white">Selective Regression Test Engine</h2>
+            <p class="text-xs text-slate-400">Impact-based test execution prioritizing directly affected endpoints</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="text-xs text-slate-400 font-medium">Mode:</span>
+            <span class="px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-brand-900/80 text-brand-300 border border-brand-500/30">
+              OPTIMIZED
+            </span>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-xl bg-surface-850 border border-surface-800 flex justify-between items-center text-xs">
+          <div>
+            <span class="text-slate-400">Total Test Suite: </span><strong class="text-white">6 tests (1,920 ms)</strong>
+          </div>
+          <div>
+            <span class="text-slate-400">Selected: </span><strong class="text-brand-400">4 tests (1,425 ms)</strong>
+          </div>
+          <div>
+            <span class="text-slate-400">Efficiency Gain: </span><strong class="text-emerald-400">Saved 495 ms (26% faster CI)</strong>
+          </div>
+        </div>
+
+        <div id="testCasesContainer" class="space-y-3">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- TAB: Request Replay -->
+      <div id="tab-replay" class="tab-pane hidden space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-white">Request Replay & Response Comparator</h2>
+            <p class="text-xs text-slate-400">Replaying historical production requests against target service v2</p>
+          </div>
+          <button onclick="triggerReplayExecution()" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-brand-600 hover:bg-brand-500 text-white shadow-sm">
+            Execute Replay Run
+          </button>
+        </div>
+
+        <div class="p-4 rounded-xl bg-surface-850 border border-surface-800 text-xs flex justify-between items-center">
+          <div>
+            <span class="text-slate-400">Replay Target: </span><code class="text-brand-300">http://staging-user-service.internal:8080</code>
+          </div>
+          <div>
+            <span class="text-slate-400">Sanitization: </span><span class="text-emerald-400 font-semibold font-mono">&#x2714; Headers & Tokens Redacted</span>
+          </div>
+          <div>
+            <span class="text-slate-400">Outcome: </span><span class="text-rose-400 font-semibold font-mono">2 / 2 Failed Regressions</span>
+          </div>
+        </div>
+
+        <div id="replayResultsContainer" class="space-y-3">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- TAB: GitHub Bot -->
+      <div id="tab-github" class="tab-pane hidden space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-white">GitHub Pull Request CI/CD Integration</h2>
+            <p class="text-xs text-slate-400">Automated PR comment generator previewing impact report</p>
+          </div>
+          <button onclick="copyPrMarkdown()" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-surface-800 border border-surface-700 text-slate-200 hover:bg-surface-700">
+            Copy Markdown Report
+          </button>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-surface-850 border border-surface-800">
+          <div class="flex items-center space-x-3 pb-3 border-b border-surface-800 text-xs">
+            <span class="font-bold text-white">github-actions[bot]</span>
+            <span class="text-slate-500">commented on PR #42 &bull; 5 minutes ago</span>
+          </div>
+          <div class="mt-4 p-4 rounded-xl bg-surface-900 border border-surface-800 font-mono text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
+### 🔍 TraceWeaver API Change Impact Report
+
+**Target Service**: `User Service`
+**Pull Request**: `#42: Refactor user schema to v2`
+**Compatibility**: 🚨 **BREAKING** (Risk Score: **84.5 / 100**)
+
+#### 🚨 Detected Contract Breaches:
+1. `RESPONSE_FIELD_REMOVED`: Property `name` removed from `UserProfile`.
+2. `RESPONSE_FIELD_TYPE_CHANGED`: Property `tier` mutated from `string` to `integer`.
+3. `REQUIRED_REQUEST_FIELD_ADDED`: Mandatory field `ageVerification` added to `CreateUserRequest`.
+
+#### 💥 Blast Radius (Impacted Consumers):
+- **Order Service** (Direct caller &rarr; `getUserById`)
+- **Notification Service** (Indirect consumer &rarr; templates greeting)
+- **Recommendation Service** (Direct caller &rarr; user tier)
+- **Mobile App (iOS/Android)** (Direct client consumer)
+
+#### 🧪 Selective Regression Replay Results:
+- Total Replays: 2 | **Failures**: 2 | Latency: ~43ms
+- Primary Regression: `STRUCTURAL_REGRESSION` (Field `name` missing from payload)
+
+#### 🛡️ Recommendation:
+> **DEPLOYMENT BLOCKED.** Maintain backward-compatible dual fields (`name` + `fullName`) during migration window.
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Client-Side JavaScript Logic -->
+  <script>
+    // State Store
+    let currentTab = 'overview';
+    let servicesData = [];
+    let diffChangesData = [];
+    let testsData = [];
+    let replayData = [];
+    let graphNodes = [];
+    let graphEdges = [];
+
+    // Fallback seed data if backend server is offline
+    const fallbackServices = [
+      { id: "srv_user", name: "User Service", description: "Identity & Accounts", environment: "production", criticality: "HIGH", specVersion: "2.0.0" },
+      { id: "srv_order", name: "Order Service", description: "Order Lifecycle & Cart", environment: "production", criticality: "CRITICAL", specVersion: "1.4.0" },
+      { id: "srv_product", name: "Product Service", description: "Catalog & Pricing", environment: "production", criticality: "MEDIUM", specVersion: "1.2.0" },
+      { id: "srv_inventory", name: "Inventory Service", description: "Warehouse Stock", environment: "production", criticality: "HIGH", specVersion: "1.1.0" },
+      { id: "srv_payment", name: "Payment Service", description: "Billing & Cards", environment: "production", criticality: "CRITICAL", specVersion: "2.1.0" },
+      { id: "srv_recommendation", name: "Recommendation Service", description: "ML Feeds", environment: "staging", criticality: "LOW", specVersion: "1.0.0" },
+      { id: "srv_notification", name: "Notification Service", description: "Email & Push SMS", environment: "production", criticality: "MEDIUM", specVersion: "1.0.4" }
+    ];
+
+    const fallbackDiffChanges = [
+      {
+        id: "chg_field_rem_name",
+        type: "RESPONSE_FIELD_REMOVED",
+        category: "RESPONSE_FIELD",
+        severity: "CRITICAL",
+        compatibility: "BREAKING",
+        oldValue: "name (string)",
+        newValue: "[REMOVED]",
+        jsonPointer: "/paths/~1api~1v1~1users~1{id}/responses/200/schema/properties/name",
+        operationId: "getUserById",
+        description: "Response field 'name' was completely removed from UserProfile schema",
+        reason: "Downstream consumers expecting 'name' will fail with null pointer or deserialization crashes."
+      },
+      {
+        id: "chg_field_type_tier",
+        type: "RESPONSE_FIELD_TYPE_CHANGED",
+        category: "RESPONSE_FIELD",
+        severity: "HIGH",
+        compatibility: "BREAKING",
+        oldValue: "tier (string)",
+        newValue: "tier (integer)",
+        jsonPointer: "/components/schemas/UserProfile/properties/tier",
+        operationId: "getUserById",
+        description: "Field 'tier' changed type from string to integer",
+        reason: "Strict JSON type deserialization in downstream microservices will fail."
+      },
+      {
+        id: "chg_enum_rem_suspended",
+        type: "ENUM_VALUES_REMOVED",
+        category: "RESPONSE_FIELD",
+        severity: "MEDIUM",
+        compatibility: "POTENTIALLY_BREAKING",
+        oldValue: "enum ['ACTIVE', 'SUSPENDED', 'PENDING']",
+        newValue: "enum ['ACTIVE', 'PENDING']",
+        jsonPointer: "/components/schemas/UserProfile/properties/status",
+        operationId: "getUserById",
+        description: "Enum value 'SUSPENDED' was removed from user status",
+        reason: "Consumers expecting 'SUSPENDED' may experience switch-case fallthrough or unhandled states."
+      },
+      {
+        id: "chg_req_field_age",
+        type: "REQUIRED_REQUEST_FIELD_ADDED",
+        category: "REQUEST_BODY",
+        severity: "HIGH",
+        compatibility: "BREAKING",
+        oldValue: "[NONE]",
+        newValue: "ageVerification (boolean, required)",
+        jsonPointer: "/components/schemas/CreateUserRequest/properties/ageVerification",
+        operationId: "createUser",
+        description: "New required boolean field 'ageVerification' added to user registration request",
+        reason: "Existing callers without this parameter will fail HTTP 400 validation."
+      },
+      {
+        id: "chg_field_add_avatar",
+        type: "OPTIONAL_RESPONSE_FIELD_ADDED",
+        category: "RESPONSE_FIELD",
+        severity: "LOW",
+        compatibility: "NON_BREAKING",
+        oldValue: "[NONE]",
+        newValue: "avatarUrl (string)",
+        jsonPointer: "/components/schemas/UserProfile/properties/avatarUrl",
+        operationId: "getUserById",
+        description: "Optional response field 'avatarUrl' introduced",
+        reason: "Tolerant consumers can safely ignore unknown additional response properties."
+      }
+    ];
+
+    const fallbackTests = [
+      { testId: "tc_usr_01", name: "Verify User Profile Deserialization", service: "User Service", type: "CONTRACT", duration: 85, result: "PASSED", selected: true, reason: "Directly tests modified API service" },
+      { testId: "tc_ord_01", name: "Order Service User Validation Flow", service: "Order Service", type: "INTEGRATION", duration: 240, result: "FAILED", selected: true, reason: "Downstream consumer service in blast radius" },
+      { testId: "tc_rec_01", name: "Recommendation Engine User Persona Extraction", service: "Recommendation Service", type: "REGRESSION", duration: 310, result: "PASSED", selected: true, reason: "Consumes user tier property" },
+      { testId: "tc_notif_01", name: "Notification Dispatch Recipient Greeting", service: "Notification Service", type: "REGRESSION", duration: 140, result: "FAILED", selected: true, reason: "Templates user name into outbound emails" },
+      { testId: "tc_inv_01", name: "Inventory Reservation Lock Test", service: "Inventory Service", type: "UNIT", duration: 95, result: "PASSED", selected: false, reason: "Outside blast radius" },
+      { testId: "tc_e2e_checkout", name: "E2E Cart Checkout Full Journey", service: "Order Service", type: "END_TO_END", duration: 950, result: "PASSED", selected: false, reason: "Omitted in optimized mode (duration saver)" }
+    ];
+
+    const fallbackReplay = [
+      {
+        recordingId: "rec_usr_001",
+        method: "GET",
+        path: "/api/v1/users/usr_1001",
+        expectedStatus: 200,
+        actualStatus: 200,
+        latency: "45ms vs 42ms",
+        regression: "STRUCTURAL_REGRESSION",
+        summary: "Missing required property 'name' in response; found 'fullName': 'Alex Chen'"
+      },
+      {
+        recordingId: "rec_usr_002",
+        method: "GET",
+        path: "/api/v1/users/usr_1002",
+        expectedStatus: 200,
+        actualStatus: 200,
+        latency: "41ms vs 38ms",
+        regression: "STRUCTURAL_REGRESSION",
+        summary: "Missing required property 'name' in response; found 'fullName': 'Sarah Connor'"
+      }
+    ];
+
+    // Navigation Switcher
+    function showTab(tabName) {
+      currentTab = tabName;
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('bg-brand-600/20', 'text-brand-300', 'border', 'border-brand-500/30');
+        btn.classList.add('text-slate-400');
+      });
+
+      const activePane = document.getElementById(`tab-${tabName}`);
+      if (activePane) activePane.classList.remove('hidden');
+
+      const activeBtn = document.getElementById(`nav-${tabName}`);
+      if (activeBtn) {
+        activeBtn.classList.remove('text-slate-400');
+        activeBtn.classList.add('bg-brand-600/20', 'text-brand-300', 'border', 'border-brand-500/30');
+      }
+
+      if (tabName === 'graph') {
+        renderDependencyGraph();
+      }
+    }
+
+    // Populate Services Registry
+    function renderServices() {
+      const container = document.getElementById('servicesList');
+      container.innerHTML = fallbackServices.map(s => `
+        <div class="p-5 rounded-xl bg-surface-850 border border-surface-800 hover:border-surface-700 transition">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white">${s.name}</h3>
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+              s.criticality === 'CRITICAL' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
+              s.criticality === 'HIGH' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+              'bg-slate-700 text-slate-300'
+            }">${s.criticality} CRITICALITY</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">${s.description}</p>
+          <div class="mt-4 pt-3 border-t border-surface-800 flex justify-between items-center text-xs text-slate-400">
+            <span>Spec: <strong class="text-slate-200 font-mono">v${s.specVersion}</strong></span>
+            <span>Env: <strong class="text-slate-200 capitalize font-mono">${s.environment}</strong></span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Populate Change Diff
+    function renderDiffChanges(filter = 'ALL') {
+      const container = document.getElementById('diffChangesContainer');
+      const filtered = fallbackDiffChanges.filter(c => filter === 'ALL' || c.compatibility === filter);
+      
+      container.innerHTML = filtered.map(c => `
+        <div class="p-4 rounded-xl bg-surface-850 border ${
+          c.compatibility === 'BREAKING' ? 'border-rose-500/30 bg-rose-500/[0.02]' : 'border-surface-800'
+        }">
+          <div class="flex items-center justify-between pb-2 border-b border-surface-800">
+            <div class="flex items-center space-x-2">
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                c.compatibility === 'BREAKING' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' :
+                c.compatibility === 'POTENTIALLY_BREAKING' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' :
+                'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+              }">${c.compatibility}</span>
+              <span class="text-xs font-mono font-semibold text-white">${c.type}</span>
+            </div>
+            <span class="text-[11px] font-mono text-slate-400">${c.operationId}</span>
+          </div>
+          <p class="text-xs text-slate-200 mt-2 font-medium">${c.description}</p>
+          <div class="mt-2 text-xs font-mono text-slate-400 bg-surface-900 p-2 rounded-lg border border-surface-800 break-all">
+            ${c.jsonPointer}
+          </div>
+          <p class="text-xs text-rose-400/90 mt-2 font-sans bg-rose-950/20 p-2 rounded-lg border border-rose-900/30">
+            <strong>Impact Reason:</strong> ${c.reason}
+          </p>
+        </div>
+      `).join('');
+    }
+
+    function filterDiffChanges() {
+      const val = document.getElementById('diffFilter').value;
+      renderDiffChanges(val);
+    }
+
+    // Populate Test Cases
+    function renderTestCases() {
+      const container = document.getElementById('testCasesContainer');
+      container.innerHTML = fallbackTests.map(t => `
+        <div class="p-4 rounded-xl bg-surface-850 border border-surface-800 flex items-center justify-between">
+          <div class="space-y-1">
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-mono font-bold text-white">${t.testId}</span>
+              <span class="text-xs text-slate-300 font-semibold">${t.name}</span>
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-surface-800 text-slate-400">${t.type}</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              Service: <span class="text-brand-300">${t.service}</span> &bull; 
+              Duration: <span class="font-mono">${t.duration}ms</span> &bull;
+              <span>${t.reason}</span>
+            </div>
+          </div>
+          <div class="flex items-center space-x-3">
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+              t.result === 'PASSED' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
+            }">${t.result}</span>
+            <span class="px-2.5 py-1 rounded text-xs font-semibold ${
+              t.selected ? 'bg-brand-600/20 text-brand-300 border border-brand-500/40' : 'bg-surface-800 text-slate-500'
+            }">${t.selected ? 'SELECTED' : 'SKIPPED'}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Populate Replay Results
+    function renderReplayResults() {
+      const container = document.getElementById('replayResultsContainer');
+      container.innerHTML = fallbackReplay.map(r => `
+        <div class="p-4 rounded-xl bg-surface-850 border border-rose-500/30 space-y-2">
+          <div class="flex items-center justify-between pb-2 border-b border-surface-800 text-xs">
+            <div class="flex items-center space-x-2">
+              <span class="px-2 py-0.5 rounded font-mono font-bold bg-rose-500/20 text-rose-300">${r.regression}</span>
+              <span class="font-mono font-bold text-white">${r.method} ${r.path}</span>
+            </div>
+            <span class="font-mono text-slate-400">${r.latency}</span>
+          </div>
+          <p class="text-xs text-rose-300/90 font-mono bg-rose-950/20 p-2.5 rounded-lg border border-rose-900/30">
+            ${r.summary}
+          </p>
+        </div>
+      `).join('');
+    }
+
+    // Interactive Dependency Graph Render
+    const graphNodesConfig = [
+      { id: "client_mobile", name: "Mobile App (iOS)", type: "CLIENT", x: 120, y: 150, impacted: true },
+      { id: "client_web", name: "Web Storefront", type: "CLIENT", x: 120, y: 350, impacted: false },
+      { id: "srv_user", name: "User Service", type: "SERVICE", x: 380, y: 150, impacted: true, isRootChange: true },
+      { id: "srv_order", name: "Order Service", type: "SERVICE", x: 380, y: 350, impacted: true },
+      { id: "srv_product", name: "Product Service", type: "SERVICE", x: 640, y: 80, impacted: false },
+      { id: "srv_inventory", name: "Inventory Service", type: "SERVICE", x: 640, y: 220, impacted: false },
+      { id: "srv_payment", name: "Payment Service", type: "SERVICE", x: 640, y: 350, impacted: false },
+      { id: "srv_notification", name: "Notification Service", type: "SERVICE", x: 640, y: 470, impacted: true },
+      { id: "srv_recommendation", name: "Recommendation", type: "SERVICE", x: 900, y: 150, impacted: true }
+    ];
+
+    const graphEdgesConfig = [
+      { source: "client_mobile", target: "srv_user", impacted: true },
+      { source: "client_web", target: "srv_order", impacted: false },
+      { source: "srv_order", target: "srv_user", impacted: true },
+      { source: "srv_order", target: "srv_inventory", impacted: false },
+      { source: "srv_order", target: "srv_payment", impacted: false },
+      { source: "srv_order", target: "srv_notification", impacted: true },
+      { source: "srv_recommendation", target: "srv_user", impacted: true },
+      { source: "srv_recommendation", target: "srv_product", impacted: false }
+    ];
+
+    let blastRadiusHighlighted = true;
+
+    function renderDependencyGraph() {
+      const svg = document.getElementById('dependencySvg');
+      svg.innerHTML = '';
+
+      // Draw Edges
+      graphEdgesConfig.forEach(edge => {
+        const s = graphNodesConfig.find(n => n.id === edge.source);
+        const t = graphNodesConfig.find(n => n.id === edge.target);
+        if (!s || !t) return;
+
+        const isHighlight = blastRadiusHighlighted && edge.impacted;
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', s.x + 60);
+        line.setAttribute('y1', s.y + 25);
+        line.setAttribute('x2', t.x + 60);
+        line.setAttribute('y2', t.y + 25);
+        line.setAttribute('stroke', isHighlight ? '#f43f5e' : '#334155');
+        line.setAttribute('stroke-width', isHighlight ? '3' : '1.5');
+        if (isHighlight) {
+          line.setAttribute('stroke-dasharray', '5,5');
+        }
+        svg.appendChild(line);
+      });
+
+      // Draw Nodes
+      graphNodesConfig.forEach(node => {
+        const isImpacted = blastRadiusHighlighted && node.impacted;
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('transform', `translate(${node.x}, ${node.y})`);
+        g.setAttribute('class', 'cursor-pointer group');
+        g.onclick = () => inspectNode(node);
+
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('width', '130');
+        rect.setAttribute('height', '50');
+        rect.setAttribute('rx', '12');
+        rect.setAttribute('fill', isImpacted ? '#26131c' : '#111827');
+        rect.setAttribute('stroke', node.isRootChange ? '#f43f5e' : (isImpacted ? '#e11d48' : '#334155'));
+        rect.setAttribute('stroke-width', isImpacted ? '2' : '1');
+        g.appendChild(rect);
+
+        const textName = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        textName.setAttribute('x', '12');
+        textName.setAttribute('y', '22');
+        textName.setAttribute('fill', '#f8fafc');
+        textName.setAttribute('font-size', '11');
+        textName.setAttribute('font-weight', '700');
+        textName.textContent = node.name;
+        g.appendChild(textName);
+
+        const textType = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        textType.setAttribute('x', '12');
+        textType.setAttribute('y', '38');
+        textType.setAttribute('fill', isImpacted ? '#fda4af' : '#64748b');
+        textType.setAttribute('font-size', '9');
+        textType.setAttribute('font-weight', '600');
+        textType.textContent = isImpacted ? (node.isRootChange ? 'MODIFIED SOURCE' : 'BLAST RADIUS') : node.type;
+        g.appendChild(textType);
+
+        svg.appendChild(g);
+      });
+    }
+
+    function highlightImpactPath() {
+      blastRadiusHighlighted = !blastRadiusHighlighted;
+      renderDependencyGraph();
+    }
+
+    function resetGraph() {
+      blastRadiusHighlighted = true;
+      renderDependencyGraph();
+      closeInspector();
+    }
+
+    function inspectNode(node) {
+      const panel = document.getElementById('nodeInspector');
+      const content = document.getElementById('inspectorContent');
+      panel.classList.remove('hidden');
+
+      content.innerHTML = `
+        <div class="text-sm font-bold text-white">${node.name}</div>
+        <div class="text-slate-400 font-mono">ID: ${node.id}</div>
+        <div class="text-slate-400 font-mono">Type: ${node.type}</div>
+        <div class="mt-2 pt-2 border-t border-surface-800 ${node.impacted ? 'text-rose-400 font-semibold' : 'text-emerald-400 font-semibold'}">
+          ${node.impacted ? '🚨 Inside Blast Radius' : '✅ Unaffected by Change'}
+        </div>
+        <p class="text-slate-300 mt-1">
+          ${node.impacted ? 'Depends directly or transitively on modified User Service contract.' : 'Independent subsystem with zero breaking upstream dependencies.'}
+        </p>
+      `;
+    }
+
+    function closeInspector() {
+      document.getElementById('nodeInspector').classList.add('hidden');
+    }
+
+    function runNewAnalysis() {
+      alert("Triggering C++20 Core Analysis Engine: Normalizing specs -> Generating Contract Diff -> Traversing Blast Radius -> Scoring Risk.");
+      showTab('risk');
+    }
+
+    function triggerReplayExecution() {
+      alert("Executing Request Replay against simulated staging environment: Redacting headers -> Replaying 2 requests -> Checking JSON schemas.");
+      showTab('replay');
+    }
+
+    function copyPrMarkdown() {
+      navigator.clipboard.writeText(`### 🔍 TraceWeaver API Change Impact Report\n\n**Target Service**: User Service\n**PR**: #42\n**Risk Score**: 84.5 / 100 (CRITICAL)\n**Blast Radius**: 3 Services, 1 Client\n**Action**: Deployment BLOCKED.`);
+      alert("Markdown report copied to clipboard!");
+    }
+
+    // Initialize View
+    document.addEventListener('DOMContentLoaded', () => {
+      renderServices();
+      renderDiffChanges();
+      renderTestCases();
+      renderReplayResults();
+      renderDependencyGraph();
+    });
+  </script>
+</body>
+</html>

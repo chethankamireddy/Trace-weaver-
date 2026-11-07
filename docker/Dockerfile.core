@@ -10,9 +10,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     clang-18 \
     git \
     ninja-build \
-    libgtest-dev \
-    nlohmann-json3-dev \
-    libyaml-cpp-dev \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
@@ -28,6 +25,6 @@ RUN cmake -B build -S . -G Ninja \
 RUN cmake --build build
 
 # Run unit tests during container build
-RUN ctest --test-dir build --output-on-failure
+RUN ./build/core/standalone_all_tests
 
-CMD ["./build/core/standalone_graph_tests"]
+CMD ["./build/core/standalone_all_tests"]

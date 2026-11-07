@@ -1,0 +1,65 @@
+[
+  {
+    "id": "srv_user",
+    "name": "User Service",
+    "description": "User identities, sessions, and profile attributes",
+    "repositoryUrl": "https://github.com/traceweaver-demo/user-service",
+    "environment": "production",
+    "criticality": "HIGH",
+    "specVersion": "2.0.0"
+  },
+  {
+    "id": "srv_product",
+    "name": "Product Service",
+    "description": "Product catalog, SKU mappings, and categories",
+    "repositoryUrl": "https://github.com/traceweaver-demo/product-service",
+    "environment": "production",
+    "criticality": "MEDIUM",
+    "specVersion": "1.2.0"
+  },
+  {
+    "id": "srv_inventory",
+    "name": "Inventory Service",
+    "description": "Stock tracking, warehouse reservations, and backorders",
+    "repositoryUrl": "https://github.com/traceweaver-demo/inventory-service",
+    "environment": "production",
+    "criticality": "HIGH",
+    "specVersion": "1.1.0"
+  },
+  {
+    "id": "srv_order",
+    "name": "Order Service",
+    "description": "Order lifecycle, cart checkout, and invoices",
+    "repositoryUrl": "https://github.com/traceweaver-demo/order-service",
+    "environment": "production",
+    "criticality": "CRITICAL",
+    "specVersion": "1.4.0"
+  },
+  {
+    "id": "srv_payment",
+    "name": "Payment Service",
+    "description": "Credit card processing, payment gateways, and refunds",
+    "repositoryUrl": "https://github.com/traceweaver-demo/payment-service",
+    "environment": "production",
+    "criticality": "CRITICAL",
+    "specVersion": "2.1.0"
+  },
+  {
+    "id": "srv_recommendation",
+    "name": "Recommendation Service",
+    "description": "Personalized machine learning recommendation ranking",
+    "repositoryUrl": "https://github.com/traceweaver-demo/recommendation-service",
+    "environment": "staging",
+    "criticality": "LOW",
+    "specVersion": "1.0.0"
+  },
+  {
+    "id": "srv_notification",
+    "name": "Notification Service",
+    "description": "Email, SMS, and push notification delivery",
+    "repositoryUrl": "https://github.com/traceweaver-demo/notification-service",
+    "environment": "production",
+    "criticality": "MEDIUM",
+    "specVersion": "1.0.4"
+  }
+]
