@@ -4,39 +4,63 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TraceWeaver | API Change Impact Analysis & Regression Replay Platform</title>
-  <!-- Tailwind CSS CDN for instant, zero-install high-fidelity styling -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              50: '#eef2ff',
-              100: '#e0e7ff',
-              500: '#6366f1',
-              600: '#4f46e5',
-              700: '#4338ca',
-              900: '#312e81',
-            },
-            surface: {
-              900: '#0b0f19',
-              850: '#111827',
-              800: '#1e293b',
-              700: '#334155',
+    if (typeof tailwind !== 'undefined') {
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: '#eef2ff',
+                100: '#e0e7ff',
+                500: '#6366f1',
+                600: '#4f46e5',
+                700: '#4338ca',
+                900: '#312e81',
+              },
+              surface: {
+                900: '#0b0f19',
+                850: '#111827',
+                800: '#1e293b',
+                700: '#334155',
+              }
             }
           }
         }
-      }
+      };
     }
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
+    /* Pure CSS Fallback & Styling Foundation */
+    :root {
+      --bg-main: #0b0f19;
+      --bg-card: #111827;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --brand: #6366f1;
+      --danger: #f43f5e;
+      --warning: #f59e0b;
+      --success: #10b981;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
     body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
     code, pre, .font-mono {
       font-family: 'JetBrains Mono', monospace;
@@ -52,15 +76,19 @@
       background: #334155;
       border-radius: 3px;
     }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: #475569;
+    .nav-btn {
+      cursor: pointer;
+      user-select: none;
+    }
+    .hidden {
+      display: none !important;
     }
   </style>
 </head>
 <body class="bg-surface-900 text-slate-100 min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
 
   <!-- Top Navigation Header -->
-  <header class="border-b border-surface-800 bg-surface-900/90 backdrop-blur sticky top-0 z-50">
+  <header class="border-b border-surface-800 bg-surface-900/95 backdrop-blur sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       <div class="flex items-center space-x-4">
         <div class="flex items-center space-x-3">
@@ -71,7 +99,7 @@
           </div>
           <div>
             <span class="text-lg font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">TRACEWEAVER</span>
-            <span class="ml-2 text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-brand-900/60 border border-brand-500/30 text-brand-300">CORE v2.0</span>
+            <span class="ml-2 text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-brand-900/60 border border-brand-500/30 text-brand-300">C++20 ENGINE</span>
           </div>
         </div>
         <div class="hidden md:flex items-center space-x-2 pl-6 border-l border-surface-700/60">
@@ -86,7 +114,7 @@
       <div class="flex items-center space-x-3">
         <div class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>Engine Online (C++20)</span>
+          <span id="backendStatusText">Backend Online (Port 4000)</span>
         </div>
         <button onclick="runNewAnalysis()" class="flex items-center space-x-2 px-3.5 py-1.5 text-xs font-semibold bg-brand-600 hover:bg-brand-500 active:scale-95 transition-all text-white rounded-lg shadow-sm shadow-brand-600/30">
           <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
@@ -170,7 +198,7 @@
           <div class="p-5 rounded-2xl bg-surface-850 border border-surface-800">
             <div class="text-xs font-medium text-slate-400">Breaking Changes</div>
             <div class="text-3xl font-extrabold text-rose-500 mt-2">3</div>
-            <div class="text-xs text-rose-400 font-medium mt-1">1 field removed, 1 type changed</div>
+            <div class="text-xs text-rose-400 font-medium mt-1">1 field removed, 1 type mutated</div>
           </div>
           <div class="p-5 rounded-2xl bg-surface-850 border border-surface-800">
             <div class="text-xs font-medium text-slate-400">Risk Score</div>
@@ -187,7 +215,7 @@
               <p class="text-xs text-slate-400 mt-0.5">Automated diff between User Service commit #8f12a and main branch</p>
             </div>
             <span class="px-3 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/30">
-              🚨 3 Breaking Contract Mutatons
+              🚨 3 Breaking Contract Mutations
             </span>
           </div>
 
@@ -219,9 +247,7 @@
             <p class="text-xs text-slate-400">All registered services, criticality levels, and API contract versions</p>
           </div>
         </div>
-        <div id="servicesList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Dynamically populated -->
-        </div>
+        <div id="servicesList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
       </div>
 
       <!-- TAB: Dependency Graph -->
@@ -233,7 +259,7 @@
           </div>
           <div class="flex items-center space-x-2">
             <button onclick="highlightImpactPath()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-600/20 text-rose-400 border border-rose-500/30 hover:bg-rose-600/30 transition">
-              Highlight Blast Radius
+              Toggle Blast Radius Highlight
             </button>
             <button onclick="resetGraph()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface-800 text-slate-300 border border-surface-700 hover:bg-surface-700 transition">
               Reset View
@@ -251,9 +277,7 @@
               <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Node Inspector</span>
               <button onclick="closeInspector()" class="text-slate-400 hover:text-white">&times;</button>
             </div>
-            <div id="inspectorContent" class="mt-3 text-xs space-y-2">
-              <!-- Dynamically populated -->
-            </div>
+            <div id="inspectorContent" class="mt-3 text-xs space-y-2"></div>
           </div>
 
           <!-- Legend -->
@@ -261,10 +285,6 @@
             <div class="flex items-center space-x-2">
               <span class="w-3 h-3 rounded-full bg-indigo-500"></span>
               <span class="text-slate-300">Service</span>
-            </div>
-            <div class="flex items-center space-x-2">
-              <span class="w-3 h-3 rounded-full bg-cyan-500"></span>
-              <span class="text-slate-300">API Operation</span>
             </div>
             <div class="flex items-center space-x-2">
               <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
@@ -294,9 +314,7 @@
           </div>
         </div>
 
-        <div id="diffChangesContainer" class="space-y-3">
-          <!-- Dynamically populated -->
-        </div>
+        <div id="diffChangesContainer" class="space-y-3"></div>
       </div>
 
       <!-- TAB: Risk Assessment -->
@@ -418,9 +436,7 @@
           </div>
         </div>
 
-        <div id="testCasesContainer" class="space-y-3">
-          <!-- Dynamically populated -->
-        </div>
+        <div id="testCasesContainer" class="space-y-3"></div>
       </div>
 
       <!-- TAB: Request Replay -->
@@ -447,9 +463,7 @@
           </div>
         </div>
 
-        <div id="replayResultsContainer" class="space-y-3">
-          <!-- Dynamically populated -->
-        </div>
+        <div id="replayResultsContainer" class="space-y-3"></div>
       </div>
 
       <!-- TAB: GitHub Bot -->
@@ -500,18 +514,10 @@
     </main>
   </div>
 
-  <!-- Client-Side JavaScript Logic -->
   <script>
     // State Store
     let currentTab = 'overview';
-    let servicesData = [];
-    let diffChangesData = [];
-    let testsData = [];
-    let replayData = [];
-    let graphNodes = [];
-    let graphEdges = [];
 
-    // Fallback seed data if backend server is offline
     const fallbackServices = [
       { id: "srv_user", name: "User Service", description: "Identity & Accounts", environment: "production", criticality: "HIGH", specVersion: "2.0.0" },
       { id: "srv_order", name: "Order Service", description: "Order Lifecycle & Cart", environment: "production", criticality: "CRITICAL", specVersion: "1.4.0" },
@@ -622,19 +628,18 @@
       }
     ];
 
-    // Navigation Switcher
     function showTab(tabName) {
       currentTab = tabName;
-      document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
-      document.querySelectorAll('.nav-btn').forEach(btn => {
+      document.querySelectorAll('.tab-pane').forEach(function(el) { el.classList.add('hidden'); });
+      document.querySelectorAll('.nav-btn').forEach(function(btn) {
         btn.classList.remove('bg-brand-600/20', 'text-brand-300', 'border', 'border-brand-500/30');
         btn.classList.add('text-slate-400');
       });
 
-      const activePane = document.getElementById(`tab-${tabName}`);
+      var activePane = document.getElementById('tab-' + tabName);
       if (activePane) activePane.classList.remove('hidden');
 
-      const activeBtn = document.getElementById(`nav-${tabName}`);
+      var activeBtn = document.getElementById('nav-' + tabName);
       if (activeBtn) {
         activeBtn.classList.remove('text-slate-400');
         activeBtn.classList.add('bg-brand-600/20', 'text-brand-300', 'border', 'border-brand-500/30');
@@ -645,114 +650,113 @@
       }
     }
 
-    // Populate Services Registry
     function renderServices() {
-      const container = document.getElementById('servicesList');
-      container.innerHTML = fallbackServices.map(s => `
-        <div class="p-5 rounded-xl bg-surface-850 border border-surface-800 hover:border-surface-700 transition">
-          <div class="flex items-center justify-between">
-            <h3 class="text-sm font-bold text-white">${s.name}</h3>
-            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
-              s.criticality === 'CRITICAL' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
-              s.criticality === 'HIGH' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
-              'bg-slate-700 text-slate-300'
-            }">${s.criticality} CRITICALITY</span>
-          </div>
-          <p class="text-xs text-slate-400 mt-1">${s.description}</p>
-          <div class="mt-4 pt-3 border-t border-surface-800 flex justify-between items-center text-xs text-slate-400">
-            <span>Spec: <strong class="text-slate-200 font-mono">v${s.specVersion}</strong></span>
-            <span>Env: <strong class="text-slate-200 capitalize font-mono">${s.environment}</strong></span>
-          </div>
-        </div>
-      `).join('');
+      var container = document.getElementById('servicesList');
+      if (!container) return;
+      container.innerHTML = fallbackServices.map(function(s) {
+        var badgeClass = s.criticality === 'CRITICAL' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
+                         s.criticality === 'HIGH' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                         'bg-slate-700 text-slate-300';
+        return '<div class="p-5 rounded-xl bg-surface-850 border border-surface-800 hover:border-surface-700 transition">' +
+          '<div class="flex items-center justify-between">' +
+            '<h3 class="text-sm font-bold text-white">' + s.name + '</h3>' +
+            '<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ' + badgeClass + '">' + s.criticality + ' CRITICALITY</span>' +
+          '</div>' +
+          '<p class="text-xs text-slate-400 mt-1">' + s.description + '</p>' +
+          '<div class="mt-4 pt-3 border-t border-surface-800 flex justify-between items-center text-xs text-slate-400">' +
+            '<span>Spec: <strong class="text-slate-200 font-mono">v' + s.specVersion + '</strong></span>' +
+            '<span>Env: <strong class="text-slate-200 capitalize font-mono">' + s.environment + '</strong></span>' +
+          '</div>' +
+        '</div>';
+      }).join('');
     }
 
-    // Populate Change Diff
-    function renderDiffChanges(filter = 'ALL') {
-      const container = document.getElementById('diffChangesContainer');
-      const filtered = fallbackDiffChanges.filter(c => filter === 'ALL' || c.compatibility === filter);
+    function renderDiffChanges(filter) {
+      if (!filter) filter = 'ALL';
+      var container = document.getElementById('diffChangesContainer');
+      if (!container) return;
+      var filtered = fallbackDiffChanges.filter(function(c) {
+        return filter === 'ALL' || c.compatibility === filter;
+      });
       
-      container.innerHTML = filtered.map(c => `
-        <div class="p-4 rounded-xl bg-surface-850 border ${
-          c.compatibility === 'BREAKING' ? 'border-rose-500/30 bg-rose-500/[0.02]' : 'border-surface-800'
-        }">
-          <div class="flex items-center justify-between pb-2 border-b border-surface-800">
-            <div class="flex items-center space-x-2">
-              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
-                c.compatibility === 'BREAKING' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' :
-                c.compatibility === 'POTENTIALLY_BREAKING' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' :
-                'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-              }">${c.compatibility}</span>
-              <span class="text-xs font-mono font-semibold text-white">${c.type}</span>
-            </div>
-            <span class="text-[11px] font-mono text-slate-400">${c.operationId}</span>
-          </div>
-          <p class="text-xs text-slate-200 mt-2 font-medium">${c.description}</p>
-          <div class="mt-2 text-xs font-mono text-slate-400 bg-surface-900 p-2 rounded-lg border border-surface-800 break-all">
-            ${c.jsonPointer}
-          </div>
-          <p class="text-xs text-rose-400/90 mt-2 font-sans bg-rose-950/20 p-2 rounded-lg border border-rose-900/30">
-            <strong>Impact Reason:</strong> ${c.reason}
-          </p>
-        </div>
-      `).join('');
+      container.innerHTML = filtered.map(function(c) {
+        var badgeClass = c.compatibility === 'BREAKING' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' :
+                         c.compatibility === 'POTENTIALLY_BREAKING' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' :
+                         'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+        var borderClass = c.compatibility === 'BREAKING' ? 'border-rose-500/30 bg-rose-500/[0.02]' : 'border-surface-800';
+
+        return '<div class="p-4 rounded-xl bg-surface-850 border ' + borderClass + '">' +
+          '<div class="flex items-center justify-between pb-2 border-b border-surface-800">' +
+            '<div class="flex items-center space-x-2">' +
+              '<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ' + badgeClass + '">' + c.compatibility + '</span>' +
+              '<span class="text-xs font-mono font-semibold text-white">' + c.type + '</span>' +
+            '</div>' +
+            '<span class="text-[11px] font-mono text-slate-400">' + c.operationId + '</span>' +
+          '</div>' +
+          '<p class="text-xs text-slate-200 mt-2 font-medium">' + c.description + '</p>' +
+          '<div class="mt-2 text-xs font-mono text-slate-400 bg-surface-900 p-2 rounded-lg border border-surface-800 break-all">' +
+            c.jsonPointer +
+          '</div>' +
+          '<p class="text-xs text-rose-400/90 mt-2 font-sans bg-rose-950/20 p-2 rounded-lg border border-rose-900/30">' +
+            '<strong>Impact Reason:</strong> ' + c.reason +
+          '</p>' +
+        '</div>';
+      }).join('');
     }
 
     function filterDiffChanges() {
-      const val = document.getElementById('diffFilter').value;
+      var val = document.getElementById('diffFilter').value;
       renderDiffChanges(val);
     }
 
-    // Populate Test Cases
     function renderTestCases() {
-      const container = document.getElementById('testCasesContainer');
-      container.innerHTML = fallbackTests.map(t => `
-        <div class="p-4 rounded-xl bg-surface-850 border border-surface-800 flex items-center justify-between">
-          <div class="space-y-1">
-            <div class="flex items-center space-x-2">
-              <span class="text-xs font-mono font-bold text-white">${t.testId}</span>
-              <span class="text-xs text-slate-300 font-semibold">${t.name}</span>
-              <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-surface-800 text-slate-400">${t.type}</span>
-            </div>
-            <div class="text-xs text-slate-400">
-              Service: <span class="text-brand-300">${t.service}</span> &bull; 
-              Duration: <span class="font-mono">${t.duration}ms</span> &bull;
-              <span>${t.reason}</span>
-            </div>
-          </div>
-          <div class="flex items-center space-x-3">
-            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
-              t.result === 'PASSED' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
-            }">${t.result}</span>
-            <span class="px-2.5 py-1 rounded text-xs font-semibold ${
-              t.selected ? 'bg-brand-600/20 text-brand-300 border border-brand-500/40' : 'bg-surface-800 text-slate-500'
-            }">${t.selected ? 'SELECTED' : 'SKIPPED'}</span>
-          </div>
-        </div>
-      `).join('');
+      var container = document.getElementById('testCasesContainer');
+      if (!container) return;
+      container.innerHTML = fallbackTests.map(function(t) {
+        var resClass = t.result === 'PASSED' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400';
+        var selClass = t.selected ? 'bg-brand-600/20 text-brand-300 border border-brand-500/40' : 'bg-surface-800 text-slate-500';
+
+        return '<div class="p-4 rounded-xl bg-surface-850 border border-surface-800 flex items-center justify-between">' +
+          '<div class="space-y-1">' +
+            '<div class="flex items-center space-x-2">' +
+              '<span class="text-xs font-mono font-bold text-white">' + t.testId + '</span>' +
+              '<span class="text-xs text-slate-300 font-semibold">' + t.name + '</span>' +
+              '<span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-surface-800 text-slate-400">' + t.type + '</span>' +
+            '</div>' +
+            '<div class="text-xs text-slate-400">' +
+              'Service: <span class="text-brand-300">' + t.service + '</span> &bull; ' +
+              'Duration: <span class="font-mono">' + t.duration + 'ms</span> &bull; ' +
+              '<span>' + t.reason + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="flex items-center space-x-3">' +
+            '<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ' + resClass + '">' + t.result + '</span>' +
+            '<span class="px-2.5 py-1 rounded text-xs font-semibold ' + selClass + '">' + (t.selected ? 'SELECTED' : 'SKIPPED') + '</span>' +
+          '</div>' +
+        '</div>';
+      }).join('');
     }
 
-    // Populate Replay Results
     function renderReplayResults() {
-      const container = document.getElementById('replayResultsContainer');
-      container.innerHTML = fallbackReplay.map(r => `
-        <div class="p-4 rounded-xl bg-surface-850 border border-rose-500/30 space-y-2">
-          <div class="flex items-center justify-between pb-2 border-b border-surface-800 text-xs">
-            <div class="flex items-center space-x-2">
-              <span class="px-2 py-0.5 rounded font-mono font-bold bg-rose-500/20 text-rose-300">${r.regression}</span>
-              <span class="font-mono font-bold text-white">${r.method} ${r.path}</span>
-            </div>
-            <span class="font-mono text-slate-400">${r.latency}</span>
-          </div>
-          <p class="text-xs text-rose-300/90 font-mono bg-rose-950/20 p-2.5 rounded-lg border border-rose-900/30">
-            ${r.summary}
-          </p>
-        </div>
-      `).join('');
+      var container = document.getElementById('replayResultsContainer');
+      if (!container) return;
+      container.innerHTML = fallbackReplay.map(function(r) {
+        return '<div class="p-4 rounded-xl bg-surface-850 border border-rose-500/30 space-y-2">' +
+          '<div class="flex items-center justify-between pb-2 border-b border-surface-800 text-xs">' +
+            '<div class="flex items-center space-x-2">' +
+              '<span class="px-2 py-0.5 rounded font-mono font-bold bg-rose-500/20 text-rose-300">' + r.regression + '</span>' +
+              '<span class="font-mono font-bold text-white">' + r.method + ' ' + r.path + '</span>' +
+            '</div>' +
+            '<span class="font-mono text-slate-400">' + r.latency + '</span>' +
+          '</div>' +
+          '<p class="text-xs text-rose-300/90 font-mono bg-rose-950/20 p-2.5 rounded-lg border border-rose-900/30">' +
+            r.summary +
+          '</p>' +
+        '</div>';
+      }).join('');
     }
 
-    // Interactive Dependency Graph Render
-    const graphNodesConfig = [
+    var graphNodesConfig = [
       { id: "client_mobile", name: "Mobile App (iOS)", type: "CLIENT", x: 120, y: 150, impacted: true },
       { id: "client_web", name: "Web Storefront", type: "CLIENT", x: 120, y: 350, impacted: false },
       { id: "srv_user", name: "User Service", type: "SERVICE", x: 380, y: 150, impacted: true, isRootChange: true },
@@ -764,7 +768,7 @@
       { id: "srv_recommendation", name: "Recommendation", type: "SERVICE", x: 900, y: 150, impacted: true }
     ];
 
-    const graphEdgesConfig = [
+    var graphEdgesConfig = [
       { source: "client_mobile", target: "srv_user", impacted: true },
       { source: "client_web", target: "srv_order", impacted: false },
       { source: "srv_order", target: "srv_user", impacted: true },
@@ -775,20 +779,21 @@
       { source: "srv_recommendation", target: "srv_product", impacted: false }
     ];
 
-    let blastRadiusHighlighted = true;
+    var blastRadiusHighlighted = true;
 
     function renderDependencyGraph() {
-      const svg = document.getElementById('dependencySvg');
+      var svg = document.getElementById('dependencySvg');
+      if (!svg) return;
       svg.innerHTML = '';
 
       // Draw Edges
-      graphEdgesConfig.forEach(edge => {
-        const s = graphNodesConfig.find(n => n.id === edge.source);
-        const t = graphNodesConfig.find(n => n.id === edge.target);
+      graphEdgesConfig.forEach(function(edge) {
+        var s = graphNodesConfig.find(function(n) { return n.id === edge.source; });
+        var t = graphNodesConfig.find(function(n) { return n.id === edge.target; });
         if (!s || !t) return;
 
-        const isHighlight = blastRadiusHighlighted && edge.impacted;
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        var isHighlight = blastRadiusHighlighted && edge.impacted;
+        var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         line.setAttribute('x1', s.x + 60);
         line.setAttribute('y1', s.y + 25);
         line.setAttribute('x2', t.x + 60);
@@ -802,14 +807,14 @@
       });
 
       // Draw Nodes
-      graphNodesConfig.forEach(node => {
-        const isImpacted = blastRadiusHighlighted && node.impacted;
-        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        g.setAttribute('transform', `translate(${node.x}, ${node.y})`);
+      graphNodesConfig.forEach(function(node) {
+        var isImpacted = blastRadiusHighlighted && node.impacted;
+        var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('transform', 'translate(' + node.x + ', ' + node.y + ')');
         g.setAttribute('class', 'cursor-pointer group');
-        g.onclick = () => inspectNode(node);
+        g.onclick = function() { inspectNode(node); };
 
-        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
         rect.setAttribute('width', '130');
         rect.setAttribute('height', '50');
         rect.setAttribute('rx', '12');
@@ -818,7 +823,7 @@
         rect.setAttribute('stroke-width', isImpacted ? '2' : '1');
         g.appendChild(rect);
 
-        const textName = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        var textName = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         textName.setAttribute('x', '12');
         textName.setAttribute('y', '22');
         textName.setAttribute('fill', '#f8fafc');
@@ -827,7 +832,7 @@
         textName.textContent = node.name;
         g.appendChild(textName);
 
-        const textType = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        var textType = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         textType.setAttribute('x', '12');
         textType.setAttribute('y', '38');
         textType.setAttribute('fill', isImpacted ? '#fda4af' : '#64748b');
@@ -852,25 +857,25 @@
     }
 
     function inspectNode(node) {
-      const panel = document.getElementById('nodeInspector');
-      const content = document.getElementById('inspectorContent');
+      var panel = document.getElementById('nodeInspector');
+      var content = document.getElementById('inspectorContent');
+      if (!panel || !content) return;
       panel.classList.remove('hidden');
 
-      content.innerHTML = `
-        <div class="text-sm font-bold text-white">${node.name}</div>
-        <div class="text-slate-400 font-mono">ID: ${node.id}</div>
-        <div class="text-slate-400 font-mono">Type: ${node.type}</div>
-        <div class="mt-2 pt-2 border-t border-surface-800 ${node.impacted ? 'text-rose-400 font-semibold' : 'text-emerald-400 font-semibold'}">
-          ${node.impacted ? '🚨 Inside Blast Radius' : '✅ Unaffected by Change'}
-        </div>
-        <p class="text-slate-300 mt-1">
-          ${node.impacted ? 'Depends directly or transitively on modified User Service contract.' : 'Independent subsystem with zero breaking upstream dependencies.'}
-        </p>
-      `;
+      var statusColor = node.impacted ? 'text-rose-400 font-semibold' : 'text-emerald-400 font-semibold';
+      var statusBadge = node.impacted ? '🚨 Inside Blast Radius' : '✅ Unaffected by Change';
+      var desc = node.impacted ? 'Depends directly or transitively on modified User Service contract.' : 'Independent subsystem with zero breaking upstream dependencies.';
+
+      content.innerHTML = '<div class="text-sm font-bold text-white">' + node.name + '</div>' +
+        '<div class="text-slate-400 font-mono">ID: ' + node.id + '</div>' +
+        '<div class="text-slate-400 font-mono">Type: ' + node.type + '</div>' +
+        '<div class="mt-2 pt-2 border-t border-surface-800 ' + statusColor + '">' + statusBadge + '</div>' +
+        '<p class="text-slate-300 mt-1">' + desc + '</p>';
     }
 
     function closeInspector() {
-      document.getElementById('nodeInspector').classList.add('hidden');
+      var panel = document.getElementById('nodeInspector');
+      if (panel) panel.classList.add('hidden');
     }
 
     function runNewAnalysis() {
@@ -879,22 +884,44 @@
     }
 
     function triggerReplayExecution() {
-      alert("Executing Request Replay against simulated staging environment: Redacting headers -> Replaying 2 requests -> Checking JSON schemas.");
+      alert("Executing Request Replay against staging target: Headers redacted -> Replaying traffic -> Evaluating regression diffs.");
       showTab('replay');
     }
 
     function copyPrMarkdown() {
-      navigator.clipboard.writeText(`### 🔍 TraceWeaver API Change Impact Report\n\n**Target Service**: User Service\n**PR**: #42\n**Risk Score**: 84.5 / 100 (CRITICAL)\n**Blast Radius**: 3 Services, 1 Client\n**Action**: Deployment BLOCKED.`);
+      var report = "### 🔍 TraceWeaver API Change Impact Report\n\n" +
+                   "**Target Service**: User Service\n" +
+                   "**PR**: #42\n" +
+                   "**Risk Score**: 84.5 / 100 (CRITICAL)\n" +
+                   "**Blast Radius**: 3 Services, 1 Client\n" +
+                   "**Action**: Deployment BLOCKED.";
+      navigator.clipboard.writeText(report);
       alert("Markdown report copied to clipboard!");
     }
 
-    // Initialize View
-    document.addEventListener('DOMContentLoaded', () => {
+    // Try fetching live data from backend to ensure real-time link
+    function testBackendConnectivity() {
+      fetch('/api/v1/health')
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          var el = document.getElementById('backendStatusText');
+          if (el) el.textContent = 'Backend Online (Port 4000)';
+        })
+        .catch(function(err) {
+          // If viewing via file://, fallback data keeps UI fully functional
+          var el = document.getElementById('backendStatusText');
+          if (el) el.textContent = 'Standalone Mode (Active)';
+        });
+    }
+
+    // Auto-initialize
+    window.addEventListener('load', function() {
       renderServices();
       renderDiffChanges();
       renderTestCases();
       renderReplayResults();
       renderDependencyGraph();
+      testBackendConnectivity();
     });
   </script>
 </body>

@@ -301,7 +301,7 @@ function sendJson(res, statusCode, data) {
 // Request dispatcher
 const server = http.createServer((req, res) => {
   const parsedUrl = url.parse(req.url, true);
-  const pathname = parsedUrl.pathname;
+  let pathname = parsedUrl.pathname || '/';
   const method = req.method;
 
   // Handle CORS preflight
@@ -312,6 +312,19 @@ const server = http.createServer((req, res) => {
       'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With'
     });
     return res.end();
+  }
+
+  // SERVE FRONTEND DIRECTLY ON ROOT PATHS
+  if ((pathname === '/' || pathname === '/index.html' || pathname === '') && method === 'GET') {
+    const indexPath = path.resolve(__dirname, '../../frontend/index.html');
+    if (fs.existsSync(indexPath)) {
+      const htmlContent = fs.readFileSync(indexPath, 'utf8');
+      res.writeHead(200, {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Access-Control-Allow-Origin': '*'
+      });
+      return res.end(htmlContent);
+    }
   }
 
   // Parse JSON body for POST/PATCH
@@ -500,5 +513,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`TraceWeaver Standalone Backend Server listening on port ${PORT}`);
+  console.log(`TraceWeaver Server running on http://localhost:${PORT}`);
 });
