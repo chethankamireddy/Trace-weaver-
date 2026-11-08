@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TraceWeaver | API Change Impact Analysis & Regression Replay Platform</title>
+  <title>TraceWeaver — API Change Impact Analysis & Regression Replay Platform</title>
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     if (typeof tailwind !== 'undefined') {
@@ -12,19 +13,24 @@
         theme: {
           extend: {
             colors: {
-              brand: {
-                50: '#eef2ff',
-                100: '#e0e7ff',
-                500: '#6366f1',
-                600: '#4f46e5',
-                700: '#4338ca',
-                900: '#312e81',
+              background: '#111827',
+              sidebar: '#0B1120',
+              card: '#1F2937',
+              border: '#374151',
+              primary: {
+                50: '#eff6ff',
+                100: '#dbeafe',
+                500: '#3B82F6',
+                600: '#2563eb',
+                700: '#1d4ed8',
               },
-              surface: {
-                900: '#0b0f19',
-                850: '#111827',
-                800: '#1e293b',
-                700: '#334155',
+              success: '#10B981',
+              warning: '#F59E0B',
+              danger: '#EF4444',
+              text: {
+                primary: '#F9FAFB',
+                secondary: '#9CA3AF',
+                muted: '#6B7280'
               }
             }
           }
@@ -34,20 +40,19 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* Pure CSS Fallback & Styling Foundation */
     :root {
-      --bg-main: #0b0f19;
-      --bg-card: #111827;
-      --bg-card-hover: #1e293b;
-      --border-color: #334155;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --brand: #6366f1;
-      --danger: #f43f5e;
-      --warning: #f59e0b;
-      --success: #10b981;
+      --bg-main: #111827;
+      --bg-sidebar: #0B1120;
+      --bg-card: #1F2937;
+      --border-color: #374151;
+      --primary: #3B82F6;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --text-main: #F9FAFB;
+      --text-muted: #9CA3AF;
     }
     * {
       box-sizing: border-box;
@@ -57,456 +62,1079 @@
     body {
       background-color: var(--bg-main);
       color: var(--text-main);
-      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      overflow-x: hidden;
     }
     code, pre, .font-mono {
       font-family: 'JetBrains Mono', monospace;
     }
     .custom-scrollbar::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
+      width: 5px;
+      height: 5px;
     }
     .custom-scrollbar::-webkit-scrollbar-track {
-      background: #111827;
+      background: #0B1120;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #334155;
+      background: #374151;
       border-radius: 3px;
     }
-    .nav-btn {
-      cursor: pointer;
-      user-select: none;
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #4B5563;
     }
-    .hidden {
-      display: none !important;
+    .nav-item.active {
+      background-color: rgba(59, 130, 246, 0.12);
+      color: #60A5FA;
+      border-left: 3px solid #3B82F6;
+      font-weight: 600;
+    }
+    .nav-item {
+      border-left: 3px solid transparent;
+      transition: all 0.15s ease-in-out;
+    }
+    .badge-critical {
+      background-color: rgba(239, 68, 68, 0.15);
+      color: #F87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .badge-high {
+      background-color: rgba(245, 158, 11, 0.15);
+      color: #FBBF24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .badge-medium {
+      background-color: rgba(59, 130, 246, 0.15);
+      color: #60A5FA;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    .badge-low {
+      background-color: rgba(16, 185, 129, 0.15);
+      color: #34D399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    /* Toast styles */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+    .toast-item {
+      pointer-events: auto;
+      background: #1F2937;
+      border: 1px solid #374151;
+      color: #F9FAFB;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: slideIn 0.2s ease-out;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    /* Modal and Drawer transitions */
+    .drawer-overlay {
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(2px);
     }
   </style>
 </head>
-<body class="bg-surface-900 text-slate-100 min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
+<body class="flex h-screen bg-[#111827] text-[#F9FAFB]">
 
-  <!-- Top Navigation Header -->
-  <header class="border-b border-surface-800 bg-surface-900/95 backdrop-blur sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <div class="flex items-center space-x-4">
-        <div class="flex items-center space-x-3">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-brand-500/20 ring-1 ring-white/20">
-            <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <!-- Left Sidebar (Width: ~240px) -->
+  <aside id="app-sidebar" class="w-60 flex-shrink-0 bg-[#0B1120] border-r border-[#374151] flex flex-col justify-between transition-all duration-200 z-30">
+    <div class="flex flex-col h-full">
+      
+      <!-- Workspace / Project Header -->
+      <div class="p-4 border-b border-[#374151]/80">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center font-mono font-bold text-xs text-white shadow-md shadow-blue-500/20">
+            TW
           </div>
-          <div>
-            <span class="text-lg font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">TRACEWEAVER</span>
-            <span class="ml-2 text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-brand-900/60 border border-brand-500/30 text-brand-300">C++20 ENGINE</span>
-          </div>
-        </div>
-        <div class="hidden md:flex items-center space-x-2 pl-6 border-l border-surface-700/60">
-          <span class="text-xs text-slate-400 font-medium">Workspace:</span>
-          <select id="workspaceSelect" class="bg-surface-800 text-xs font-semibold text-slate-200 border border-surface-700 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-500">
-            <option>Retail E-Commerce Platform</option>
-            <option>Fintech Core Gateway</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="flex items-center space-x-3">
-        <div class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span id="backendStatusText">Backend Online (Port 4000)</span>
-        </div>
-        <button onclick="runNewAnalysis()" class="flex items-center space-x-2 px-3.5 py-1.5 text-xs font-semibold bg-brand-600 hover:bg-brand-500 active:scale-95 transition-all text-white rounded-lg shadow-sm shadow-brand-600/30">
-          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
-          <span>Run Impact Analysis</span>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <div class="flex-1 flex max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 gap-6">
-
-    <!-- Navigation Sidebar -->
-    <aside class="w-64 flex-shrink-0">
-      <nav class="space-y-1 bg-surface-850 p-2 rounded-2xl border border-surface-800">
-        <button onclick="showTab('overview')" id="nav-overview" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-medium bg-brand-600/20 text-brand-300 border border-brand-500/30">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-          <span>System Overview</span>
-        </button>
-        <button onclick="showTab('services')" id="nav-services" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-surface-800 transition">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-          <span>Services Registry</span>
-        </button>
-        <button onclick="showTab('graph')" id="nav-graph" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-surface-800 transition">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
-          <span>Dependency Graph</span>
-        </button>
-        <button onclick="showTab('diff')" id="nav-diff" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-surface-800 transition">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-          <span>Change Analysis Diff</span>
-        </button>
-        <button onclick="showTab('risk')" id="nav-risk" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-surface-800 transition">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-          <span>Risk Assessment</span>
-        </button>
-        <button onclick="showTab('tests')" id="nav-tests" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-surface-800 transition">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          <span>Selective Tests</span>
-        </button>
-        <button onclick="showTab('replay')" id="nav-replay" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-surface-800 transition">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-          <span>Request Replay</span>
-        </button>
-        <button onclick="showTab('github')" id="nav-github" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-surface-800 transition">
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
-          <span>GitHub CI Bot</span>
-        </button>
-      </nav>
-
-      <!-- Active Service Spec Card -->
-      <div class="mt-4 p-4 rounded-2xl bg-surface-850 border border-surface-800">
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Active Run</span>
-          <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">HIGH RISK</span>
-        </div>
-        <div class="text-sm font-bold text-white">User Service</div>
-        <div class="text-xs font-mono text-slate-400 mt-1">v1.0.0 &rarr; v2.0.0 (breaking)</div>
-        <div class="mt-3 pt-3 border-t border-surface-700/60 flex items-center justify-between text-xs">
-          <span class="text-slate-400">Blast Radius:</span>
-          <span class="text-rose-400 font-semibold font-mono">3 Services, 1 Client</span>
-        </div>
-      </div>
-    </aside>
-
-    <!-- Main Content Area -->
-    <main class="flex-1 min-w-0">
-
-      <!-- TAB: Overview -->
-      <div id="tab-overview" class="tab-pane space-y-6">
-        <!-- Metrics Row -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div class="p-5 rounded-2xl bg-surface-850 border border-surface-800">
-            <div class="text-xs font-medium text-slate-400">Microservices</div>
-            <div class="text-3xl font-extrabold text-white mt-2">7</div>
-            <div class="text-xs text-emerald-400 font-medium mt-1">Production catalog indexed</div>
-          </div>
-          <div class="p-5 rounded-2xl bg-surface-850 border border-surface-800">
-            <div class="text-xs font-medium text-slate-400">API Operations</div>
-            <div class="text-3xl font-extrabold text-white mt-2">28</div>
-            <div class="text-xs text-slate-400 font-medium mt-1">Normalized contract schemas</div>
-          </div>
-          <div class="p-5 rounded-2xl bg-surface-850 border border-surface-800">
-            <div class="text-xs font-medium text-slate-400">Breaking Changes</div>
-            <div class="text-3xl font-extrabold text-rose-500 mt-2">3</div>
-            <div class="text-xs text-rose-400 font-medium mt-1">1 field removed, 1 type mutated</div>
-          </div>
-          <div class="p-5 rounded-2xl bg-surface-850 border border-surface-800">
-            <div class="text-xs font-medium text-slate-400">Risk Score</div>
-            <div class="text-3xl font-extrabold text-amber-400 mt-2">84.5<span class="text-xs font-normal text-slate-400">/100</span></div>
-            <div class="text-xs text-amber-400 font-medium mt-1">Deployment Blocked</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-[13px] font-bold tracking-tight text-white truncate">TraceWeaver</div>
+            <div class="text-[10px] text-[#9CA3AF] font-mono truncate">API Impact Platform</div>
           </div>
         </div>
 
-        <!-- Latest Analysis Run Card -->
-        <div class="p-6 rounded-2xl bg-surface-850 border border-surface-800">
-          <div class="flex items-center justify-between pb-4 border-b border-surface-700/60">
-            <div>
-              <h2 class="text-base font-bold text-white">Latest Change Impact Evaluation</h2>
-              <p class="text-xs text-slate-400 mt-0.5">Automated diff between User Service commit #8f12a and main branch</p>
-            </div>
-            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/30">
-              🚨 3 Breaking Contract Mutations
-            </span>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-            <div class="p-4 rounded-xl bg-surface-900 border border-surface-800">
-              <span class="text-xs text-slate-400 font-medium">Impact Traversal (Blast Radius)</span>
-              <div class="mt-2 text-sm font-semibold text-white">Order Service &rarr; Notification Service</div>
-              <p class="text-xs text-slate-400 mt-1">Downstream consumers reading removed <code class="text-rose-400">UserProfile.name</code> will fail.</p>
-            </div>
-            <div class="p-4 rounded-xl bg-surface-900 border border-surface-800">
-              <span class="text-xs text-slate-400 font-medium">Selective Test Optimization</span>
-              <div class="mt-2 text-sm font-semibold text-white">4 of 6 Tests Selected (67%)</div>
-              <p class="text-xs text-slate-400 mt-1">Saved 495ms execution duration while guaranteeing 100% impact coverage.</p>
-            </div>
-            <div class="p-4 rounded-xl bg-surface-900 border border-surface-800">
-              <span class="text-xs text-slate-400 font-medium">Regression Replay Verdict</span>
-              <div class="mt-2 text-sm font-semibold text-rose-400">2 Confirmed Failures</div>
-              <p class="text-xs text-slate-400 mt-1">Replaying historical production traffic confirmed missing field payload error.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB: Services -->
-      <div id="tab-services" class="tab-pane hidden space-y-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-lg font-bold text-white">Microservice Registry</h2>
-            <p class="text-xs text-slate-400">All registered services, criticality levels, and API contract versions</p>
-          </div>
-        </div>
-        <div id="servicesList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-      </div>
-
-      <!-- TAB: Dependency Graph -->
-      <div id="tab-graph" class="tab-pane hidden space-y-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-lg font-bold text-white">Interactive Dependency Graph</h2>
-            <p class="text-xs text-slate-400">Directed multi-tier graph connecting services, operations, and clients</p>
-          </div>
-          <div class="flex items-center space-x-2">
-            <button onclick="highlightImpactPath()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-600/20 text-rose-400 border border-rose-500/30 hover:bg-rose-600/30 transition">
-              Toggle Blast Radius Highlight
-            </button>
-            <button onclick="resetGraph()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface-800 text-slate-300 border border-surface-700 hover:bg-surface-700 transition">
-              Reset View
-            </button>
-          </div>
-        </div>
-
-        <!-- Graph Canvas Container -->
-        <div class="relative w-full h-[550px] rounded-2xl bg-surface-850 border border-surface-800 overflow-hidden flex">
-          <svg id="dependencySvg" class="w-full h-full cursor-grab active:cursor-grabbing"></svg>
-          
-          <!-- Node Inspector Side Panel -->
-          <div id="nodeInspector" class="absolute top-4 right-4 w-72 p-4 rounded-xl bg-surface-900/95 backdrop-blur border border-surface-700 shadow-xl hidden">
-            <div class="flex items-center justify-between pb-2 border-b border-surface-800">
-              <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Node Inspector</span>
-              <button onclick="closeInspector()" class="text-slate-400 hover:text-white">&times;</button>
-            </div>
-            <div id="inspectorContent" class="mt-3 text-xs space-y-2"></div>
-          </div>
-
-          <!-- Legend -->
-          <div class="absolute bottom-4 left-4 p-3 rounded-xl bg-surface-900/90 backdrop-blur border border-surface-800 text-[11px] space-y-1.5">
-            <div class="flex items-center space-x-2">
-              <span class="w-3 h-3 rounded-full bg-indigo-500"></span>
-              <span class="text-slate-300">Service</span>
-            </div>
-            <div class="flex items-center space-x-2">
-              <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
-              <span class="text-slate-300">Client Consumer</span>
-            </div>
-            <div class="flex items-center space-x-2">
-              <span class="w-3 h-3 rounded-full bg-rose-500 animate-pulse"></span>
-              <span class="text-rose-400 font-semibold">Impacted in Blast Radius</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB: Change Diff -->
-      <div id="tab-diff" class="tab-pane hidden space-y-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-lg font-bold text-white">API Contract Diff Engine</h2>
-            <p class="text-xs text-slate-400">Deterministic rule-based comparison between v1.0.0 and v2.0.0</p>
-          </div>
-          <div class="flex items-center space-x-2">
-            <select id="diffFilter" onchange="filterDiffChanges()" class="bg-surface-800 text-xs font-semibold text-slate-200 border border-surface-700 rounded-lg px-2.5 py-1.5 focus:outline-none">
-              <option value="ALL">All Changes (5)</option>
-              <option value="BREAKING">Breaking Only (3)</option>
-              <option value="NON_BREAKING">Non-Breaking (1)</option>
+        <!-- Project Switcher -->
+        <div class="mt-3">
+          <label class="text-[10px] uppercase font-semibold text-[#6B7280] tracking-wider block mb-1">Active Project</label>
+          <div class="relative">
+            <select id="project-selector" onchange="onProjectChange(this.value)" class="w-full bg-[#1F2937] text-xs text-[#F9FAFB] font-medium border border-[#374151] rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-blue-500 transition cursor-pointer">
+              <option value="proj_ecommerce">Core Commerce Platform</option>
+              <option value="proj_fintech">Fintech Core Gateway</option>
             </select>
           </div>
         </div>
-
-        <div id="diffChangesContainer" class="space-y-3"></div>
       </div>
 
-      <!-- TAB: Risk Assessment -->
-      <div id="tab-risk" class="tab-pane hidden space-y-6">
-        <div class="p-6 rounded-2xl bg-surface-850 border border-surface-800 flex items-center justify-between">
+      <!-- Navigation Links -->
+      <nav class="flex-1 overflow-y-auto custom-scrollbar px-2 py-3 space-y-4">
+        
+        <!-- Section: WORKSPACE -->
+        <div>
+          <span class="px-2.5 text-[10px] uppercase tracking-wider font-semibold text-[#6B7280]">Workspace</span>
+          <div class="mt-1 space-y-0.5">
+            <button onclick="navigateTo('overview')" id="nav-overview" class="nav-item active w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium text-[#9CA3AF] hover:text-white hover:bg-[#1F2937]/50">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              <span>Overview</span>
+            </button>
+            <button onclick="navigateTo('projects')" id="nav-projects" class="nav-item w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium text-[#9CA3AF] hover:text-white hover:bg-[#1F2937]/50">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+              <span>Projects</span>
+            </button>
+            <button onclick="navigateTo('services')" id="nav-services" class="nav-item w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium text-[#9CA3AF] hover:text-white hover:bg-[#1F2937]/50">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
+              <span>Services</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Section: ANALYSIS -->
+        <div>
+          <span class="px-2.5 text-[10px] uppercase tracking-wider font-semibold text-[#6B7280]">Analysis</span>
+          <div class="mt-1 space-y-0.5">
+            <button onclick="navigateTo('analysis')" id="nav-analysis" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-[#9CA3AF] hover:text-white hover:bg-[#1F2937]/50">
+              <div class="flex items-center space-x-2.5">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                <span>Change Analysis</span>
+              </div>
+              <span class="px-1.5 py-0.2 rounded text-[9px] font-bold font-mono badge-critical">84.5</span>
+            </button>
+            <button onclick="navigateTo('graph')" id="nav-graph" class="nav-item w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium text-[#9CA3AF] hover:text-white hover:bg-[#1F2937]/50">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+              <span>Dependency Graph</span>
+            </button>
+            <button onclick="navigateTo('tests')" id="nav-tests" class="nav-item w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium text-[#9CA3AF] hover:text-white hover:bg-[#1F2937]/50">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span>Regression Tests</span>
+            </button>
+            <button onclick="navigateTo('replay')" id="nav-replay" class="nav-item w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium text-[#9CA3AF] hover:text-white hover:bg-[#1F2937]/50">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span>Request Replay</span>
+            </button>
+            <button onclick="navigateTo('reports')" id="nav-reports" class="nav-item w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium text-[#9CA3AF] hover:text-white hover:bg-[#1F2937]/50">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <span>Risk Reports</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Section: CONFIGURATION -->
+        <div>
+          <span class="px-2.5 text-[10px] uppercase tracking-wider font-semibold text-[#6B7280]">Configuration</span>
+          <div class="mt-1 space-y-0.5">
+            <button onclick="navigateTo('specifications')" id="nav-specifications" class="nav-item w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium text-[#9CA3AF] hover:text-white hover:bg-[#1F2937]/50">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+              <span>API Specifications</span>
+            </button>
+            <button onclick="navigateTo('integrations')" id="nav-integrations" class="nav-item w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium text-[#9CA3AF] hover:text-white hover:bg-[#1F2937]/50">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+              <span>Integrations</span>
+            </button>
+            <button onclick="navigateTo('settings')" id="nav-settings" class="nav-item w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium text-[#9CA3AF] hover:text-white hover:bg-[#1F2937]/50">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <span>Settings</span>
+            </button>
+          </div>
+        </div>
+
+      </nav>
+
+      <!-- Sidebar Footer (User & Engine State) -->
+      <div class="p-3 border-t border-[#374151]/80 bg-[#070b14]">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2 min-w-0">
+            <div class="w-6 h-6 rounded-full bg-blue-600/30 border border-blue-500/40 flex items-center justify-center text-[10px] font-bold text-blue-400">
+              CR
+            </div>
+            <div class="min-w-0">
+              <div class="text-[11px] font-semibold text-[#F9FAFB] truncate">Chethan Reddy</div>
+              <div class="text-[9px] text-[#9CA3AF] truncate">chethan@traceweaver.local</div>
+            </div>
+          </div>
+          <button onclick="openModal('modal-onboarding')" title="Onboarding Guide" class="text-[#9CA3AF] hover:text-white p-1 rounded hover:bg-[#1F2937]">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- Main Work Area -->
+  <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    
+    <!-- Top Navigation Bar (Height: ~64px) -->
+    <header class="h-14 border-b border-[#374151] bg-[#111827]/95 backdrop-blur px-6 flex items-center justify-between flex-shrink-0 z-20">
+      
+      <!-- Left: Breadcrumbs -->
+      <div class="flex items-center space-x-2 text-xs font-medium">
+        <span class="text-[#9CA3AF]" id="breadcrumb-project">Core Commerce Platform</span>
+        <span class="text-[#4B5563]">/</span>
+        <span class="text-[#F9FAFB] font-semibold" id="breadcrumb-page">Overview</span>
+      </div>
+
+      <!-- Right: Controls & Actions -->
+      <div class="flex items-center space-x-3">
+        
+        <!-- Environment Badge / Selector -->
+        <div class="flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-[#1F2937] border border-[#374151] text-xs">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          <select id="env-selector" onchange="onEnvChange(this.value)" class="bg-transparent text-[#F9FAFB] text-[11px] font-mono font-medium focus:outline-none cursor-pointer">
+            <option value="production">production</option>
+            <option value="staging">staging</option>
+            <option value="sandbox">sandbox</option>
+          </select>
+        </div>
+
+        <!-- Global Search Box -->
+        <div class="relative w-48 lg:w-64">
+          <svg class="w-3.5 h-3.5 text-[#9CA3AF] absolute left-2.5 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input type="text" id="global-search" oninput="onGlobalSearch(this.value)" placeholder="Search operations, schemas, IDs..." class="w-full bg-[#1F2937] text-xs text-[#F9FAFB] placeholder-[#6B7280] rounded-md pl-8 pr-3 py-1.5 border border-[#374151] focus:outline-none focus:border-blue-500 transition">
+        </div>
+
+        <!-- Notification Bell -->
+        <div class="relative">
+          <button onclick="toggleNotifications()" class="relative p-1.5 text-[#9CA3AF] hover:text-white rounded-md hover:bg-[#1F2937] transition">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500"></span>
+          </button>
+
+          <!-- Notifications Dropdown -->
+          <div id="notifications-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-[#1F2937] border border-[#374151] rounded-xl shadow-2xl p-3 z-50 text-xs">
+            <div class="flex items-center justify-between pb-2 border-b border-[#374151]">
+              <span class="font-bold text-white">Live Activity Notifications</span>
+              <span class="text-[10px] text-blue-400 cursor-pointer hover:underline" onclick="toggleNotifications()">Mark read</span>
+            </div>
+            <div id="notifications-list" class="mt-2 space-y-2 max-h-64 overflow-y-auto custom-scrollbar"></div>
+          </div>
+        </div>
+
+        <!-- Dynamic Primary Action Button -->
+        <button id="primary-action-btn" onclick="executePrimaryAction()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-[#3B82F6] hover:bg-blue-600 active:scale-95 text-xs font-semibold text-white shadow-sm transition">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+          <span id="primary-action-label">Run Analysis</span>
+        </button>
+
+      </div>
+    </header>
+
+    <!-- Page Content Container -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 bg-[#111827]">
+      
+      <!-- PAGE 1: Login & Onboarding (Modal View) -->
+      <div id="page-login" class="page-view hidden max-w-md mx-auto my-12 bg-[#1F2937] border border-[#374151] rounded-2xl p-8 shadow-2xl">
+        <div class="text-center mb-6">
+          <div class="w-12 h-12 mx-auto rounded-xl bg-blue-600 flex items-center justify-center font-mono font-bold text-xl text-white shadow-lg shadow-blue-500/30">TW</div>
+          <h2 class="text-xl font-bold text-white mt-4">TraceWeaver</h2>
+          <p class="text-xs text-[#9CA3AF] mt-1">Understand what breaks before you ship.</p>
+        </div>
+        <form onsubmit="handleLogin(event)" class="space-y-4 text-xs">
           <div>
-            <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Explainable Risk Score</span>
-            <div class="flex items-baseline space-x-3 mt-1">
-              <span class="text-5xl font-black text-rose-500">84.5</span>
-              <span class="text-lg text-slate-400 font-semibold">/ 100</span>
-              <span class="px-3 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30">
-                CRITICAL / HIGH RISK
-              </span>
-            </div>
-            <p class="text-xs text-slate-400 mt-2 max-w-xl">
-              Calculation based on 3 breaking mutations, 2-tier transitive blast radius traversal across critical services, and 2 confirmed replay regression failures.
-            </p>
+            <label class="block text-[#9CA3AF] mb-1 font-medium">Work Email</label>
+            <input type="email" required value="engineer@enterprise.io" class="w-full bg-[#111827] border border-[#374151] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500">
           </div>
-          <div class="w-36 h-36 flex items-center justify-center relative">
-            <svg class="w-32 h-32 transform -rotate-90">
-              <circle cx="64" cy="64" r="50" stroke="#1e293b" stroke-width="10" fill="transparent"/>
-              <circle cx="64" cy="64" r="50" stroke="#f43f5e" stroke-width="10" stroke-dasharray="314" stroke-dashoffset="48" stroke-linecap="round" fill="transparent"/>
-            </svg>
-            <span class="absolute font-mono font-bold text-xl text-white">84.5%</span>
+          <div>
+            <label class="block text-[#9CA3AF] mb-1 font-medium">Password</label>
+            <input type="password" required value="••••••••••••" class="w-full bg-[#111827] border border-[#374151] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500">
           </div>
-        </div>
-
-        <!-- Breakdown Factor Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="p-4 rounded-xl bg-surface-850 border border-surface-800">
-            <div class="flex justify-between items-center text-xs font-semibold">
-              <span class="text-slate-300">Change Severity Factor</span>
-              <span class="text-rose-400 font-mono">30.0 / 30 pts</span>
-            </div>
-            <div class="w-full bg-surface-900 rounded-full h-2 mt-2">
-              <div class="bg-rose-500 h-2 rounded-full" style="width: 100%"></div>
-            </div>
-            <p class="text-xs text-slate-400 mt-2">Max penalty incurred due to removed response field and mutated primitive type.</p>
+          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 rounded-lg transition">Sign In</button>
+          <div class="relative flex py-2 items-center">
+            <div class="flex-grow border-t border-[#374151]"></div>
+            <span class="flex-shrink mx-3 text-[#6B7280] text-[10px]">or</span>
+            <div class="flex-grow border-t border-[#374151]"></div>
           </div>
-
-          <div class="p-4 rounded-xl bg-surface-850 border border-surface-800">
-            <div class="flex justify-between items-center text-xs font-semibold">
-              <span class="text-slate-300">Impact Breadth Factor</span>
-              <span class="text-amber-400 font-mono">23.0 / 25 pts</span>
-            </div>
-            <div class="w-full bg-surface-900 rounded-full h-2 mt-2">
-              <div class="bg-amber-400 h-2 rounded-full" style="width: 92%"></div>
-            </div>
-            <p class="text-xs text-slate-400 mt-2">3 downstream microservices + 1 client app within blast radius.</p>
-          </div>
-
-          <div class="p-4 rounded-xl bg-surface-850 border border-surface-800">
-            <div class="flex justify-between items-center text-xs font-semibold">
-              <span class="text-slate-300">Dependency Depth Factor</span>
-              <span class="text-amber-400 font-mono">10.0 / 15 pts</span>
-            </div>
-            <div class="w-full bg-surface-900 rounded-full h-2 mt-2">
-              <div class="bg-amber-400 h-2 rounded-full" style="width: 66%"></div>
-            </div>
-            <p class="text-xs text-slate-400 mt-2">Max depth 2 hops (User &rarr; Order &rarr; Notification).</p>
-          </div>
-
-          <div class="p-4 rounded-xl bg-surface-850 border border-surface-800">
-            <div class="flex justify-between items-center text-xs font-semibold">
-              <span class="text-slate-300">Regression Failure Factor</span>
-              <span class="text-rose-400 font-mono">10.0 / 15 pts</span>
-            </div>
-            <div class="w-full bg-surface-900 rounded-full h-2 mt-2">
-              <div class="bg-rose-500 h-2 rounded-full" style="width: 66%"></div>
-            </div>
-            <p class="text-xs text-slate-400 mt-2">Confirmed regression: 2 historical requests failed deserialization.</p>
-          </div>
-        </div>
-
-        <!-- Actionable Recommendations -->
-        <div class="p-5 rounded-2xl bg-surface-850 border border-surface-800 space-y-3">
-          <h3 class="text-sm font-bold text-white">Recommended Engineering Actions</h3>
-          <ul class="text-xs text-slate-300 space-y-2">
-            <li class="flex items-start space-x-2">
-              <span class="text-rose-400 font-bold">&#x2716;</span>
-              <span><strong>Block Automated Deployment:</strong> Do not merge PR #42 without downstream contract migration.</span>
-            </li>
-            <li class="flex items-start space-x-2">
-              <span class="text-amber-400 font-bold">&#x26A0;</span>
-              <span><strong>Backward-Compatibility Window:</strong> Provide an API transition phase returning both <code class="text-amber-300">name</code> and <code class="text-amber-300">fullName</code>.</span>
-            </li>
-            <li class="flex items-start space-x-2">
-              <span class="text-indigo-400 font-bold">&#x2714;</span>
-              <span><strong>Notify Stakeholders:</strong> Tag maintainers of <code class="text-indigo-300">order-service</code> and <code class="text-indigo-300">notification-service</code>.</span>
-            </li>
-          </ul>
-        </div>
+          <button type="button" onclick="loadDemoProject()" class="w-full bg-[#0B1120] hover:bg-[#111827] border border-[#374151] text-white font-medium py-2 rounded-lg transition flex items-center justify-center space-x-2">
+            <span>⚡ Load Instant Demo Project</span>
+          </button>
+        </form>
       </div>
 
-      <!-- TAB: Selective Tests -->
-      <div id="tab-tests" class="tab-pane hidden space-y-4">
+      <!-- PAGE 2: Overview Dashboard -->
+      <div id="page-overview" class="page-view space-y-6">
+        
+        <!-- Metric Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="p-4 rounded-xl bg-[#1F2937] border border-[#374151]">
+            <div class="text-[11px] font-medium text-[#9CA3AF]">Total Services</div>
+            <div class="text-2xl font-bold text-white mt-1">7</div>
+            <div class="text-[10px] text-emerald-400 mt-1 flex items-center">
+              <span>&#x25B2; 100% active coverage</span>
+            </div>
+          </div>
+          <div class="p-4 rounded-xl bg-[#1F2937] border border-[#374151]">
+            <div class="text-[11px] font-medium text-[#9CA3AF]">API Operations</div>
+            <div class="text-2xl font-bold text-white mt-1">28</div>
+            <div class="text-[10px] text-[#9CA3AF] mt-1">Indexed OpenAPI endpoints</div>
+          </div>
+          <div class="p-4 rounded-xl bg-[#1F2937] border border-[#374151]">
+            <div class="text-[11px] font-medium text-[#9CA3AF]">High-Risk Changes</div>
+            <div class="text-2xl font-bold text-rose-500 mt-1">3</div>
+            <div class="text-[10px] text-rose-400 mt-1">1 field removed, 1 type mutated</div>
+          </div>
+          <div class="p-4 rounded-xl bg-[#1F2937] border border-[#374151]">
+            <div class="text-[11px] font-medium text-[#9CA3AF]">Failed Regression Tests</div>
+            <div class="text-2xl font-bold text-amber-400 mt-1">2</div>
+            <div class="text-[10px] text-amber-400 mt-1">Confirmed payload mismatches</div>
+          </div>
+        </div>
+
+        <!-- Middle Grid: Recent Runs & Service Dependency Overview -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- Recent Analysis Runs (2 Cols) -->
+          <div class="lg:col-span-2 p-5 rounded-xl bg-[#1F2937] border border-[#374151]">
+            <div class="flex items-center justify-between pb-3 border-b border-[#374151]">
+              <div>
+                <h3 class="text-sm font-bold text-white">Recent Analysis Runs</h3>
+                <p class="text-[11px] text-[#9CA3AF]">Click any row to open the complete change impact report</p>
+              </div>
+              <button onclick="navigateTo('analysis')" class="text-xs text-blue-400 hover:text-blue-300 font-medium">View Analysis &rarr;</button>
+            </div>
+            <div class="mt-3 overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="text-[#6B7280] border-b border-[#374151]/50 text-[10px] uppercase font-mono">
+                    <th class="py-2">Analysis Run</th>
+                    <th class="py-2">Source Service</th>
+                    <th class="py-2">Version Delta</th>
+                    <th class="py-2">Risk Score</th>
+                    <th class="py-2">Status</th>
+                    <th class="py-2">Date</th>
+                  </tr>
+                </thead>
+                <tbody id="overview-recent-runs" class="divide-y divide-[#374151]/40"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Service Dependency Graph Preview (1 Col) -->
+          <div class="p-5 rounded-xl bg-[#1F2937] border border-[#374151] flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between pb-2 border-b border-[#374151]">
+                <h3 class="text-sm font-bold text-white">Dependency Flow Preview</h3>
+                <button onclick="navigateTo('graph')" class="text-xs text-blue-400 hover:text-blue-300 font-medium">Full Graph &rarr;</button>
+              </div>
+              <div class="mt-3 p-3 rounded-lg bg-[#0B1120] border border-[#374151] font-mono text-[11px] text-[#9CA3AF] space-y-2">
+                <div class="flex items-center justify-between">
+                  <span>User Service <span class="text-rose-400 font-bold">(v2.0)</span></span>
+                  <span class="text-[10px] text-rose-400">&#x25C4; Root Change</span>
+                </div>
+                <div class="pl-3 border-l-2 border-rose-500/40 space-y-1">
+                  <div class="text-white">&rarr; Order Service <span class="badge-critical px-1.5 rounded text-[9px]">CRITICAL</span></div>
+                  <div class="pl-3 border-l-2 border-rose-500/40 text-[#9CA3AF] text-[10px]">
+                    &rarr; Notification Service
+                  </div>
+                </div>
+                <div class="pl-3 border-l-2 border-amber-500/40 space-y-1 text-white">
+                  <div>&rarr; Recommendation Service</div>
+                </div>
+                <div class="pl-3 border-l-2 border-emerald-500/40 text-emerald-400 text-[10px]">
+                  &rarr; Mobile App (iOS/Android)
+                </div>
+              </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-[#374151] flex items-center justify-between text-xs">
+              <span class="text-[#9CA3AF]">Transitive Blast Radius</span>
+              <span class="font-bold text-rose-400 font-mono">3 Services, 1 Client</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Bottom Grid: Recent Activity & Risk Distribution -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 p-5 rounded-xl bg-[#1F2937] border border-[#374151]">
+            <h3 class="text-sm font-bold text-white pb-3 border-b border-[#374151]">System Engineering Activity Feed</h3>
+            <div id="overview-activity-feed" class="mt-3 space-y-3"></div>
+          </div>
+          <div class="p-5 rounded-xl bg-[#1F2937] border border-[#374151]">
+            <h3 class="text-sm font-bold text-white pb-3 border-b border-[#374151]">Risk Distribution (Catalog)</h3>
+            <div class="mt-4 space-y-3 text-xs">
+              <div>
+                <div class="flex justify-between text-[#9CA3AF] mb-1">
+                  <span>Critical Risk (Score 85+)</span>
+                  <span class="text-rose-400 font-mono font-bold">1 service</span>
+                </div>
+                <div class="w-full bg-[#111827] rounded-full h-1.5"><div class="bg-rose-500 h-1.5 rounded-full" style="width: 14%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-[#9CA3AF] mb-1">
+                  <span>High Risk (Score 60-84)</span>
+                  <span class="text-amber-400 font-mono font-bold">2 services</span>
+                </div>
+                <div class="w-full bg-[#111827] rounded-full h-1.5"><div class="bg-amber-400 h-1.5 rounded-full" style="width: 28%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-[#9CA3AF] mb-1">
+                  <span>Medium Risk (Score 30-59)</span>
+                  <span class="text-blue-400 font-mono font-bold">3 services</span>
+                </div>
+                <div class="w-full bg-[#111827] rounded-full h-1.5"><div class="bg-blue-500 h-1.5 rounded-full" style="width: 42%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-[#9CA3AF] mb-1">
+                  <span>Low Risk (Score 0-29)</span>
+                  <span class="text-emerald-400 font-mono font-bold">1 service</span>
+                </div>
+                <div class="w-full bg-[#111827] rounded-full h-1.5"><div class="bg-emerald-500 h-1.5 rounded-full" style="width: 14%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- PAGE 3: Projects -->
+      <div id="page-projects" class="page-view hidden space-y-4">
         <div class="flex items-center justify-between">
           <div>
-            <h2 class="text-lg font-bold text-white">Selective Regression Test Engine</h2>
-            <p class="text-xs text-slate-400">Impact-based test execution prioritizing directly affected endpoints</p>
+            <h2 class="text-base font-bold text-white">Project Workspaces</h2>
+            <p class="text-xs text-[#9CA3AF]">Manage API contracts, environments, and isolated service catalogs</p>
+          </div>
+          <button onclick="openModal('modal-create-project')" class="px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white">
+            + Create Project
+          </button>
+        </div>
+        <div id="projects-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      </div>
+
+      <!-- PAGE 4: Services -->
+      <div id="page-services" class="page-view hidden space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-base font-bold text-white">Microservice Registry</h2>
+            <p class="text-xs text-[#9CA3AF]">Active services, criticality ratings, and API contract specifications</p>
           </div>
           <div class="flex items-center space-x-2">
-            <span class="text-xs text-slate-400 font-medium">Mode:</span>
-            <span class="px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-brand-900/80 text-brand-300 border border-brand-500/30">
-              OPTIMIZED
-            </span>
+            <select id="services-criticality-filter" onchange="filterServicesList(this.value)" class="bg-[#1F2937] text-xs text-[#F9FAFB] border border-[#374151] rounded-md px-2.5 py-1.5 focus:outline-none">
+              <option value="ALL">All Criticalities</option>
+              <option value="CRITICAL">Critical Only</option>
+              <option value="HIGH">High Only</option>
+              <option value="MEDIUM">Medium Only</option>
+            </select>
+            <button onclick="openModal('modal-add-service')" class="px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white">
+              + Add Service
+            </button>
           </div>
         </div>
-
-        <div class="p-4 rounded-xl bg-surface-850 border border-surface-800 flex justify-between items-center text-xs">
-          <div>
-            <span class="text-slate-400">Total Test Suite: </span><strong class="text-white">6 tests (1,920 ms)</strong>
-          </div>
-          <div>
-            <span class="text-slate-400">Selected: </span><strong class="text-brand-400">4 tests (1,425 ms)</strong>
-          </div>
-          <div>
-            <span class="text-slate-400">Efficiency Gain: </span><strong class="text-emerald-400">Saved 495 ms (26% faster CI)</strong>
-          </div>
+        <div class="p-4 rounded-xl bg-[#1F2937] border border-[#374151] overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="text-[#6B7280] border-b border-[#374151] text-[10px] uppercase font-mono">
+                <th class="py-2.5">Service Name</th>
+                <th class="py-2.5">Environment</th>
+                <th class="py-2.5">Operations</th>
+                <th class="py-2.5">Dependencies</th>
+                <th class="py-2.5">Criticality</th>
+                <th class="py-2.5">Contract Version</th>
+                <th class="py-2.5">Status</th>
+                <th class="py-2.5 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="services-table-body" class="divide-y divide-[#374151]/40"></tbody>
+          </table>
         </div>
-
-        <div id="testCasesContainer" class="space-y-3"></div>
       </div>
 
-      <!-- TAB: Request Replay -->
-      <div id="tab-replay" class="tab-pane hidden space-y-4">
+      <!-- PAGE 5: API Specifications -->
+      <div id="page-specifications" class="page-view hidden space-y-4">
         <div class="flex items-center justify-between">
           <div>
-            <h2 class="text-lg font-bold text-white">Request Replay & Response Comparator</h2>
-            <p class="text-xs text-slate-400">Replaying historical production requests against target service v2</p>
+            <h2 class="text-base font-bold text-white">OpenAPI Contract Specifications</h2>
+            <p class="text-xs text-[#9CA3AF]">Normalized OpenAPI 3.0 / 3.1 definitions, schemas, and endpoints</p>
           </div>
-          <button onclick="triggerReplayExecution()" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-brand-600 hover:bg-brand-500 text-white shadow-sm">
-            Execute Replay Run
+          <button onclick="openModal('modal-upload-spec')" class="px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white">
+            Upload Specification
           </button>
         </div>
 
-        <div class="p-4 rounded-xl bg-surface-850 border border-surface-800 text-xs flex justify-between items-center">
-          <div>
-            <span class="text-slate-400">Replay Target: </span><code class="text-brand-300">http://staging-user-service.internal:8080</code>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="p-4 rounded-xl bg-[#1F2937] border border-[#374151] space-y-2">
+            <span class="text-[10px] uppercase font-mono font-bold text-[#6B7280]">Endpoint Navigation Tree</span>
+            <div id="spec-tree-container" class="space-y-1 font-mono text-xs mt-2">
+              <div class="p-2 rounded bg-[#0B1120] border border-[#374151] cursor-pointer hover:border-blue-500 text-white">
+                <span class="text-blue-400 font-bold">GET</span> /api/v1/users/{id}
+              </div>
+              <div class="p-2 rounded bg-[#0B1120] border border-[#374151] cursor-pointer hover:border-blue-500 text-white">
+                <span class="text-emerald-400 font-bold">POST</span> /api/v1/users
+              </div>
+              <div class="p-2 rounded bg-[#0B1120] border border-[#374151] cursor-pointer hover:border-blue-500 text-white">
+                <span class="text-amber-400 font-bold">PUT</span> /api/v1/users/{id}/status
+              </div>
+            </div>
           </div>
-          <div>
-            <span class="text-slate-400">Sanitization: </span><span class="text-emerald-400 font-semibold font-mono">&#x2714; Headers & Tokens Redacted</span>
+          <div class="lg:col-span-2 p-5 rounded-xl bg-[#1F2937] border border-[#374151]">
+            <div class="flex items-center justify-between pb-3 border-b border-[#374151]">
+              <div>
+                <span class="text-xs font-mono font-bold text-blue-400">GET /api/v1/users/{id}</span>
+                <h3 class="text-sm font-bold text-white mt-0.5">Operation: getUserById</h3>
+              </div>
+              <span class="badge-critical px-2 py-0.5 rounded text-[10px] font-mono font-bold">MUTATED CONTRACT</span>
+            </div>
+            <div class="mt-4 grid grid-cols-2 gap-4 text-xs">
+              <div class="p-3 rounded-lg bg-[#0B1120] border border-[#374151]">
+                <span class="text-[#6B7280] font-mono text-[10px] block mb-1">Baseline v1.0.0 Response Schema</span>
+                <pre class="font-mono text-[11px] text-[#9CA3AF] leading-relaxed">
+{
+  "id": "string",
+  "email": "string",
+  <span class="text-rose-400 font-bold">"name": "string",</span>
+  "tier": "string",
+  "status": "ACTIVE|SUSPENDED"
+}</pre>
+              </div>
+              <div class="p-3 rounded-lg bg-[#0B1120] border border-[#374151]">
+                <span class="text-[#6B7280] font-mono text-[10px] block mb-1">Incoming v2.0.0 Response Schema</span>
+                <pre class="font-mono text-[11px] text-white leading-relaxed">
+{
+  "id": "string",
+  "email": "string",
+  <span class="text-emerald-400 font-bold">"fullName": "string",</span>
+  <span class="text-amber-400 font-bold">"tier": 1,</span>
+  "status": "ACTIVE|PENDING"
+}</pre>
+              </div>
+            </div>
           </div>
+        </div>
+      </div>
+
+      <!-- PAGE 6: Change Impact Analysis (THE SIGNATURE PAGE) -->
+      <div id="page-analysis" class="page-view hidden space-y-6">
+        
+        <!-- Analysis Header -->
+        <div class="p-5 rounded-xl bg-[#1F2937] border border-[#374151] flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <span class="text-slate-400">Outcome: </span><span class="text-rose-400 font-semibold font-mono">2 / 2 Failed Regressions</span>
+            <div class="flex items-center space-x-2">
+              <span class="text-xs uppercase font-mono font-bold text-[#6B7280]">Analysis Run:</span>
+              <span class="text-xs font-mono font-bold text-white">run_user_v1_to_v2</span>
+              <span class="badge-critical px-2 py-0.5 rounded text-[10px] font-mono font-bold">CRITICAL / HIGH RISK</span>
+            </div>
+            <h2 class="text-lg font-bold text-white mt-1">User Service Contract Drift Evaluation</h2>
+            <div class="text-xs text-[#9CA3AF] font-mono mt-0.5">
+              <span>Source: User Service</span> &bull; 
+              <span>Version: <code class="text-blue-400">1.0.0</code> &rarr; <code class="text-rose-400">2.0.0</code></span> &bull; 
+              <span>Evaluated: 2026-11-08 10:15:00 UTC</span>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button onclick="exportReportModal()" class="px-3 py-1.5 rounded-md bg-[#0B1120] hover:bg-[#111827] border border-[#374151] text-xs font-semibold text-white">
+              Export Risk Report
+            </button>
+            <button onclick="triggerAnalysisNow()" class="px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white">
+              Re-Run Analysis
+            </button>
           </div>
         </div>
 
-        <div id="replayResultsContainer" class="space-y-3"></div>
+        <!-- 4 Summary Metric Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="p-4 rounded-xl bg-[#1F2937] border border-rose-500/30">
+            <div class="text-[11px] font-medium text-[#9CA3AF]">Explainable Risk Score</div>
+            <div class="text-3xl font-extrabold text-rose-500 mt-1">84.5<span class="text-xs font-normal text-[#9CA3AF]">/100</span></div>
+            <div class="text-[10px] text-rose-400 mt-1">Deployment BLOCKED</div>
+          </div>
+          <div class="p-4 rounded-xl bg-[#1F2937] border border-[#374151]">
+            <div class="text-[11px] font-medium text-[#9CA3AF]">Breaking Contract Changes</div>
+            <div class="text-3xl font-extrabold text-white mt-1">3</div>
+            <div class="text-[10px] text-rose-400 mt-1">1 field removed, 1 type changed, 1 req param</div>
+          </div>
+          <div class="p-4 rounded-xl bg-[#1F2937] border border-[#374151]">
+            <div class="text-[11px] font-medium text-[#9CA3AF]">Blast Radius (Services)</div>
+            <div class="text-3xl font-extrabold text-amber-400 mt-1">3 <span class="text-xs font-normal text-[#9CA3AF]">+ 1 client</span></div>
+            <div class="text-[10px] text-[#9CA3AF] mt-1">Max dependency depth 2 hops</div>
+          </div>
+          <div class="p-4 rounded-xl bg-[#1F2937] border border-[#374151]">
+            <div class="text-[11px] font-medium text-[#9CA3AF]">Selective Tests Selected</div>
+            <div class="text-3xl font-extrabold text-emerald-400 mt-1">4 <span class="text-xs font-normal text-[#9CA3AF]">/ 6</span></div>
+            <div class="text-[10px] text-emerald-400 mt-1">Saved 495ms (26% CI speedup)</div>
+          </div>
+        </div>
+
+        <!-- Analysis Tabs Navigation -->
+        <div class="border-b border-[#374151] flex space-x-6 text-xs font-medium">
+          <button onclick="switchAnalysisTab('summary')" id="tab-btn-summary" class="pb-2.5 text-blue-400 border-b-2 border-blue-500 font-semibold">Summary</button>
+          <button onclick="switchAnalysisTab('changes')" id="tab-btn-changes" class="pb-2.5 text-[#9CA3AF] hover:text-white">Detected Changes (5)</button>
+          <button onclick="switchAnalysisTab('graph')" id="tab-btn-graph" class="pb-2.5 text-[#9CA3AF] hover:text-white">Blast Radius Graph</button>
+          <button onclick="switchAnalysisTab('tests')" id="tab-btn-tests" class="pb-2.5 text-[#9CA3AF] hover:text-white">Regression Tests (4/6)</button>
+          <button onclick="switchAnalysisTab('replay')" id="tab-btn-replay" class="pb-2.5 text-[#9CA3AF] hover:text-white">Replay Regressions (2)</button>
+          <button onclick="switchAnalysisTab('breakdown')" id="tab-btn-breakdown" class="pb-2.5 text-[#9CA3AF] hover:text-white">Risk Formula Breakdown</button>
+        </div>
+
+        <!-- TAB 1: Summary -->
+        <div id="analysis-tab-summary" class="analysis-subtab space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div class="p-4 rounded-xl bg-[#0B1120] border border-amber-500/20">
+              <span class="text-[10px] uppercase font-mono font-bold text-amber-400">1. Potential Impact</span>
+              <p class="text-[#9CA3AF] mt-1">Identified through dependency graph traversal: Order Service, Notification Service, Recommendation Service, and Mobile Client have registered paths to the changed API.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-[#0B1120] border border-rose-500/30">
+              <span class="text-[10px] uppercase font-mono font-bold text-rose-400">2. Breaking Contract Change</span>
+              <p class="text-[#9CA3AF] mt-1">Detected deterministically: Field <code class="text-rose-300">name</code> removed, field <code class="text-rose-300">tier</code> type mutated to integer, and required request property <code class="text-rose-300">ageVerification</code> added.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-[#0B1120] border border-red-600/40">
+              <span class="text-[10px] uppercase font-mono font-bold text-red-400">3. Confirmed Regression</span>
+              <p class="text-[#9CA3AF] mt-1">Confirmed via request replay: Replaying 2 historical production requests against staging failed with <code class="text-red-300">STRUCTURAL_REGRESSION</code> (missing field).</p>
+            </div>
+          </div>
+
+          <div class="p-5 rounded-xl bg-[#1F2937] border border-[#374151] space-y-3">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-white">Recommended Engineering Actions</h4>
+            <div class="space-y-2 text-xs">
+              <div class="flex items-start space-x-2">
+                <span class="text-rose-500 font-bold">&#x2716;</span>
+                <span class="text-[#F9FAFB]"><strong>Block Pull Request:</strong> Do not merge PR #42 without downstream consumer migration.</span>
+              </div>
+              <div class="flex items-start space-x-2">
+                <span class="text-amber-400 font-bold">&#x26A0;</span>
+                <span class="text-[#F9FAFB]"><strong>Maintain Dual-Field Compatibility:</strong> Return both <code class="text-amber-300">name</code> and <code class="text-amber-300">fullName</code> for a 60-day migration window.</span>
+              </div>
+              <div class="flex items-start space-x-2">
+                <span class="text-blue-400 font-bold">&#x2714;</span>
+                <span class="text-[#F9FAFB]"><strong>Notify Service Owners:</strong> Tag maintainers of <code class="text-blue-300">order-service</code> and <code class="text-blue-300">notification-service</code>.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: Changes Table -->
+        <div id="analysis-tab-changes" class="analysis-subtab hidden space-y-3">
+          <div class="p-4 rounded-xl bg-[#1F2937] border border-[#374151] overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="text-[#6B7280] border-b border-[#374151] text-[10px] uppercase font-mono">
+                  <th class="py-2.5">Change</th>
+                  <th class="py-2.5">Operation ID</th>
+                  <th class="py-2.5">JSON Pointer</th>
+                  <th class="py-2.5">Change Type</th>
+                  <th class="py-2.5">Severity</th>
+                  <th class="py-2.5">Compatibility</th>
+                  <th class="py-2.5 text-right">Inspect</th>
+                </tr>
+              </thead>
+              <tbody id="analysis-changes-table" class="divide-y divide-[#374151]/40"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB 3: Blast Radius Graph -->
+        <div id="analysis-tab-graph" class="analysis-subtab hidden">
+          <div class="relative w-full h-[450px] rounded-xl bg-[#0B1120] border border-[#374151] overflow-hidden">
+            <svg id="analysis-blast-svg" class="w-full h-full"></svg>
+          </div>
+        </div>
+
+        <!-- TAB 4: Regression Tests -->
+        <div id="analysis-tab-tests" class="analysis-subtab hidden space-y-3">
+          <div class="p-4 rounded-xl bg-[#1F2937] border border-[#374151] flex justify-between items-center text-xs">
+            <div>Total Suite: <strong class="text-white">6 tests (1,920 ms)</strong></div>
+            <div>Selected: <strong class="text-blue-400 font-mono">4 tests (1,425 ms)</strong></div>
+            <div>Efficiency: <strong class="text-emerald-400 font-mono">Saved 495 ms (26% faster)</strong></div>
+          </div>
+          <div id="analysis-tests-list" class="space-y-2"></div>
+        </div>
+
+        <!-- TAB 5: Replay Results -->
+        <div id="analysis-tab-replay" class="analysis-subtab hidden space-y-3">
+          <div id="analysis-replay-list" class="space-y-3"></div>
+        </div>
+
+        <!-- TAB 6: Risk Formula Breakdown -->
+        <div id="analysis-tab-breakdown" class="analysis-subtab hidden space-y-4">
+          <div class="p-5 rounded-xl bg-[#0B1120] border border-[#374151] font-mono text-xs">
+            <div class="text-[#9CA3AF] mb-2 font-bold uppercase tracking-wider text-[10px]">Deterministic Risk Formula</div>
+            <div class="text-white bg-[#111827] p-3 rounded-lg border border-[#374151]">
+              Risk Score = Severity (30.0) + Breadth (23.0) + Depth (10.0) + Criticality (11.5) + Replay (10.0) = <strong class="text-rose-400 font-bold">84.5 / 100</strong>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div class="p-4 rounded-xl bg-[#1F2937] border border-[#374151] space-y-1.5">
+              <div class="flex justify-between font-semibold"><span class="text-white">Change Severity Factor</span><span class="text-rose-400 font-mono">30.0 / 30 pts</span></div>
+              <div class="w-full bg-[#0B1120] rounded-full h-1.5"><div class="bg-rose-500 h-1.5 rounded-full" style="width: 100%"></div></div>
+              <p class="text-[11px] text-[#9CA3AF]">3 breaking mutations: 1 field removed, 1 type changed, 1 required param.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-[#1F2937] border border-[#374151] space-y-1.5">
+              <div class="flex justify-between font-semibold"><span class="text-white">Impact Breadth Factor</span><span class="text-amber-400 font-mono">23.0 / 25 pts</span></div>
+              <div class="w-full bg-[#0B1120] rounded-full h-1.5"><div class="bg-amber-400 h-1.5 rounded-full" style="width: 92%"></div></div>
+              <p class="text-[11px] text-[#9CA3AF]">3 downstream microservices + 1 client app within blast radius.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-[#1F2937] border border-[#374151] space-y-1.5">
+              <div class="flex justify-between font-semibold"><span class="text-white">Dependency Depth Factor</span><span class="text-amber-400 font-mono">10.0 / 15 pts</span></div>
+              <div class="w-full bg-[#0B1120] rounded-full h-1.5"><div class="bg-amber-400 h-1.5 rounded-full" style="width: 66%"></div></div>
+              <p class="text-[11px] text-[#9CA3AF]">Max depth 2 hops (User &rarr; Order &rarr; Notification).</p>
+            </div>
+            <div class="p-4 rounded-xl bg-[#1F2937] border border-[#374151] space-y-1.5">
+              <div class="flex justify-between font-semibold"><span class="text-white">Regression Failure Factor</span><span class="text-rose-400 font-mono">10.0 / 15 pts</span></div>
+              <div class="w-full bg-[#0B1120] rounded-full h-1.5"><div class="bg-rose-500 h-1.5 rounded-full" style="width: 66%"></div></div>
+              <p class="text-[11px] text-[#9CA3AF]">Confirmed regression: 2 historical requests failed payload check.</p>
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      <!-- TAB: GitHub Bot -->
-      <div id="tab-github" class="tab-pane hidden space-y-4">
+      <!-- PAGE 7: Dependency Graph (THE SIGNATURE VISUALIZATION) -->
+      <div id="page-graph" class="page-view hidden space-y-4">
+        
+        <!-- Graph Toolbar -->
+        <div class="p-3 rounded-xl bg-[#1F2937] border border-[#374151] flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div class="flex items-center space-x-2">
+            <span class="font-bold text-white text-xs">Graph Controls:</span>
+            <button onclick="toggleBlastHighlight()" id="blast-toggle-btn" class="px-2.5 py-1 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30 font-semibold hover:bg-rose-500/30">
+              Toggle Blast Radius Highlight
+            </button>
+            <button onclick="resetGraphView()" class="px-2.5 py-1 rounded bg-[#0B1120] text-[#9CA3AF] hover:text-white border border-[#374151]">
+              Reset View
+            </button>
+          </div>
+          <div class="flex items-center space-x-2">
+            <select id="graph-node-type-filter" onchange="filterGraphByType(this.value)" class="bg-[#0B1120] text-xs text-[#F9FAFB] border border-[#374151] rounded px-2 py-1">
+              <option value="ALL">All Node Types</option>
+              <option value="SERVICE">Services Only</option>
+              <option value="CLIENT">Clients Only</option>
+              <option value="API_OPERATION">Operations Only</option>
+            </select>
+            <button onclick="zoomGraph(1.1)" class="px-2 py-1 rounded bg-[#0B1120] border border-[#374151] text-white">+</button>
+            <button onclick="zoomGraph(0.9)" class="px-2 py-1 rounded bg-[#0B1120] border border-[#374151] text-white">-</button>
+          </div>
+        </div>
+
+        <!-- 75% Graph Canvas + 25% Side Drawer Inspector -->
+        <div class="flex gap-4 h-[600px]">
+          
+          <!-- 75% Canvas -->
+          <div class="flex-1 relative rounded-xl bg-[#0B1120] border border-[#374151] overflow-hidden">
+            <svg id="main-dependency-svg" class="w-full h-full cursor-grab active:cursor-grabbing"></svg>
+            
+            <!-- Legend overlay -->
+            <div class="absolute bottom-3 left-3 p-3 rounded-lg bg-[#111827]/90 backdrop-blur border border-[#374151] text-[10px] space-y-1">
+              <div class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span><span class="text-white">Service Node</span></div>
+              <div class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span><span class="text-white">Client Consumer</span></div>
+              <div class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-cyan-500"></span><span class="text-white">API Operation</span></div>
+              <div class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span><span class="text-rose-400 font-bold">In Blast Radius</span></div>
+            </div>
+          </div>
+
+          <!-- 25% Right-Side Details Drawer -->
+          <div id="graph-node-drawer" class="w-80 rounded-xl bg-[#1F2937] border border-[#374151] p-4 flex flex-col justify-between overflow-y-auto custom-scrollbar">
+            <div>
+              <div class="flex items-center justify-between pb-2 border-b border-[#374151]">
+                <span class="text-[10px] uppercase font-mono font-bold text-[#6B7280]">Node Inspector</span>
+                <span id="drawer-node-status" class="badge-critical px-1.5 py-0.5 rounded text-[9px] font-mono">BLAST RADIUS</span>
+              </div>
+              <div id="drawer-node-content" class="mt-3 text-xs space-y-3">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+            <div class="pt-3 border-t border-[#374151]">
+              <button onclick="navigateTo('analysis')" class="w-full py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white">
+                View Change Impact
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- PAGE 8: Regression Tests -->
+      <div id="page-tests" class="page-view hidden space-y-4">
         <div class="flex items-center justify-between">
           <div>
-            <h2 class="text-lg font-bold text-white">GitHub Pull Request CI/CD Integration</h2>
-            <p class="text-xs text-slate-400">Automated PR comment generator previewing impact report</p>
+            <h2 class="text-base font-bold text-white">Regression Test Suite & Selective Coverage</h2>
+            <p class="text-xs text-[#9CA3AF]">Test-to-operation mapping, automated impact selection, and execution duration</p>
           </div>
-          <button onclick="copyPrMarkdown()" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-surface-800 border border-surface-700 text-slate-200 hover:bg-surface-700">
-            Copy Markdown Report
+          <div class="flex items-center space-x-2">
+            <button onclick="openModal('modal-create-test')" class="px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white">
+              + Create Test
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <div class="p-3 rounded-lg bg-[#1F2937] border border-[#374151] text-xs">
+            <span class="text-[#9CA3AF]">Total Tests</span>
+            <div class="text-xl font-bold text-white mt-1">6</div>
+          </div>
+          <div class="p-3 rounded-lg bg-[#1F2937] border border-[#374151] text-xs">
+            <span class="text-[#9CA3AF]">Passing Baseline</span>
+            <div class="text-xl font-bold text-emerald-400 mt-1">4</div>
+          </div>
+          <div class="p-3 rounded-lg bg-[#1F2937] border border-[#374151] text-xs">
+            <span class="text-[#9CA3AF]">Failing Regressions</span>
+            <div class="text-xl font-bold text-rose-500 mt-1">2</div>
+          </div>
+          <div class="p-3 rounded-lg bg-[#1F2937] border border-[#374151] text-xs">
+            <span class="text-[#9CA3AF]">Time Reduction</span>
+            <div class="text-xl font-bold text-blue-400 mt-1">26%</div>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-xl bg-[#1F2937] border border-[#374151] overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="text-[#6B7280] border-b border-[#374151] text-[10px] uppercase font-mono">
+                <th class="py-2.5">Test Identifier</th>
+                <th class="py-2.5">Test Name</th>
+                <th class="py-2.5">Service</th>
+                <th class="py-2.5">Type</th>
+                <th class="py-2.5">Priority</th>
+                <th class="py-2.5">Duration</th>
+                <th class="py-2.5">Result</th>
+                <th class="py-2.5">Selection Status</th>
+              </tr>
+            </thead>
+            <tbody id="regression-tests-table-body" class="divide-y divide-[#374151]/40"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAGE 9: Request Replay -->
+      <div id="page-replay" class="page-view hidden space-y-4">
+        
+        <!-- Header -->
+        <div class="p-4 rounded-xl bg-[#1F2937] border border-[#374151] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="font-bold text-white">Replay Run:</span>
+              <span class="font-mono text-blue-400 font-bold">rep_user_staging</span>
+              <span class="badge-critical px-2 py-0.5 rounded text-[10px] font-mono">FAILED REGRESSIONS</span>
+            </div>
+            <div class="text-[#9CA3AF] mt-0.5">Target: <code class="text-white">http://staging-user-service.internal:8080</code> &bull; Headers redacted</div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button onclick="triggerReplayNow()" class="px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 font-semibold text-white">
+              Start Replay
+            </button>
+            <button onclick="showToast('Replay run cancelled.', 'warning')" class="px-3 py-1.5 rounded bg-[#0B1120] border border-[#374151] text-[#9CA3AF] hover:text-white">
+              Cancel
+            </button>
+          </div>
+        </div>
+
+        <!-- 3-Column Inspection Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 h-[550px]">
+          
+          <!-- Left: Request List (1 Col) -->
+          <div class="p-3 rounded-xl bg-[#1F2937] border border-[#374151] flex flex-col overflow-y-auto custom-scrollbar">
+            <span class="text-[10px] uppercase font-mono font-bold text-[#6B7280] mb-2">Historical Requests</span>
+            <div id="replay-request-list" class="space-y-1.5 flex-1"></div>
+          </div>
+
+          <!-- Center: Request & Response Inspector + Diff View (2 Cols) -->
+          <div class="lg:col-span-2 p-4 rounded-xl bg-[#1F2937] border border-[#374151] flex flex-col overflow-y-auto custom-scrollbar">
+            <div class="flex items-center justify-between pb-2 border-b border-[#374151] text-xs">
+              <span class="font-bold text-white">Side-by-Side Response Comparison</span>
+              <label class="flex items-center space-x-1.5 text-[11px] text-[#9CA3AF] cursor-pointer">
+                <input type="checkbox" checked onchange="toggleIgnoreTimestamps(this.checked)" class="rounded bg-[#111827] border-[#374151]">
+                <span>Ignore timestamps / dynamic tokens</span>
+              </label>
+            </div>
+
+            <!-- Comparison Boxes -->
+            <div class="grid grid-cols-2 gap-3 mt-3 flex-1 text-xs">
+              <div class="p-3 rounded-lg bg-[#0B1120] border border-[#374151]">
+                <span class="text-[10px] uppercase font-mono text-[#6B7280] block mb-1">Baseline Production Response (200 OK)</span>
+                <pre class="font-mono text-[11px] text-[#9CA3AF] leading-relaxed overflow-x-auto">
+{
+  "id": "usr_1001",
+  "email": "alex@example.com",
+  <span class="text-rose-400 font-bold bg-rose-950/40 px-1 rounded">"name": "Alex Chen",</span>
+  "status": "ACTIVE",
+  "tier": "gold",
+  "timestamp": "2026-11-01T10:00:00Z"
+}</pre>
+              </div>
+              <div class="p-3 rounded-lg bg-[#0B1120] border border-rose-500/30">
+                <span class="text-[10px] uppercase font-mono text-rose-400 block mb-1">Replay Staging Response (200 OK)</span>
+                <pre class="font-mono text-[11px] text-white leading-relaxed overflow-x-auto">
+{
+  "id": "usr_1001",
+  "email": "alex@example.com",
+  <span class="text-emerald-400 font-bold bg-emerald-950/40 px-1 rounded">"fullName": "Alex Chen",</span>
+  "status": "ACTIVE",
+  <span class="text-amber-400 font-bold bg-amber-950/40 px-1 rounded">"tier": 1,</span>
+  "timestamp": "2026-11-08T10:18:02Z"
+}</pre>
+              </div>
+            </div>
+            
+            <div class="mt-3 p-2.5 rounded bg-rose-950/20 border border-rose-900/40 text-xs text-rose-300 font-mono">
+              <strong>REGRESSION VERDICT:</strong> Field <code>name</code> was omitted from response payload. Expected string <code>"Alex Chen"</code>, received <code>undefined</code>.
+            </div>
+          </div>
+
+          <!-- Right: Summary Card (1 Col) -->
+          <div class="p-4 rounded-xl bg-[#1F2937] border border-[#374151] flex flex-col justify-between text-xs space-y-3">
+            <div>
+              <span class="text-[10px] uppercase font-mono font-bold text-[#6B7280] block pb-2 border-b border-[#374151]">Regression Summary</span>
+              <div class="mt-3 space-y-2">
+                <div class="flex justify-between">
+                  <span class="text-[#9CA3AF]">Status Code:</span>
+                  <span class="text-emerald-400 font-mono font-bold">200 OK (Match)</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-[#9CA3AF]">Latency:</span>
+                  <span class="text-white font-mono">45ms vs 42ms (+3ms)</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-[#9CA3AF]">Classification:</span>
+                  <span class="badge-critical px-1.5 rounded font-mono text-[10px]">STRUCTURAL</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-[#9CA3AF]">Diff Count:</span>
+                  <span class="text-rose-400 font-bold font-mono">2 breaking fields</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-[#374151]">
+              <div class="text-[11px] text-[#9CA3AF] mb-2">Safeguards: State-changing replay verbs (DELETE/PUT) are disabled.</div>
+              <button onclick="showToast('Replay report exported.', 'success')" class="w-full py-1.5 rounded bg-[#0B1120] hover:bg-[#111827] border border-[#374151] font-semibold text-white">
+                Export Replay Diffs
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- PAGE 10: Risk Reports -->
+      <div id="page-reports" class="page-view hidden space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-base font-bold text-white">Engineering Risk Reports</h2>
+            <p class="text-xs text-[#9CA3AF]">Formal contract compliance, blast radius metrics, and remediation guides</p>
+          </div>
+          <button onclick="exportFullMarkdownReport()" class="px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white">
+            Export Markdown Report
           </button>
         </div>
 
-        <div class="p-6 rounded-2xl bg-surface-850 border border-surface-800">
-          <div class="flex items-center space-x-3 pb-3 border-b border-surface-800 text-xs">
-            <span class="font-bold text-white">github-actions[bot]</span>
-            <span class="text-slate-500">commented on PR #42 &bull; 5 minutes ago</span>
+        <div class="p-6 rounded-xl bg-[#1F2937] border border-[#374151] space-y-6">
+          <div>
+            <span class="badge-critical px-2.5 py-0.5 rounded text-xs font-mono font-bold">ASSESSMENT: HIGH RISK (84.5 / 100)</span>
+            <h3 class="text-xl font-bold text-white mt-2">API Change Impact & Regression Report</h3>
+            <p class="text-xs text-[#9CA3AF] font-mono mt-0.5">Project: Core Commerce Platform &bull; Service: User Service (v1.0.0 &rarr; v2.0.0)</p>
           </div>
-          <div class="mt-4 p-4 rounded-xl bg-surface-900 border border-surface-800 font-mono text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
-### 🔍 TraceWeaver API Change Impact Report
 
-**Target Service**: `User Service`
-**Pull Request**: `#42: Refactor user schema to v2`
-**Compatibility**: 🚨 **BREAKING** (Risk Score: **84.5 / 100**)
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div class="p-4 rounded-lg bg-[#0B1120] border border-[#374151]">
+              <h4 class="font-bold text-white mb-2">1. Executive Summary</h4>
+              <p class="text-[#9CA3AF] leading-relaxed">
+                User Service pull request introduces 3 breaking changes. Downstream dependency analysis reveals 3 affected microservices (Order, Notification, Recommendation) and 1 mobile client consumer. Request replay against staging confirmed 2 hard structural regressions.
+              </p>
+            </div>
+            <div class="p-4 rounded-lg bg-[#0B1120] border border-[#374151]">
+              <h4 class="font-bold text-white mb-2">2. Deployment Verdict</h4>
+              <div class="text-rose-400 font-bold font-mono">AUTOMATED DEPLOYMENT BLOCKED</div>
+              <p class="text-[#9CA3AF] mt-1 leading-relaxed">
+                Do not merge into master without dual-field alias support. Notification Service will drop user greeting emails if <code class="text-rose-300">name</code> is removed.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-#### 🚨 Detected Contract Breaches:
-1. `RESPONSE_FIELD_REMOVED`: Property `name` removed from `UserProfile`.
-2. `RESPONSE_FIELD_TYPE_CHANGED`: Property `tier` mutated from `string` to `integer`.
-3. `REQUIRED_REQUEST_FIELD_ADDED`: Mandatory field `ageVerification` added to `CreateUserRequest`.
+      <!-- PAGE 11: Integrations -->
+      <div id="page-integrations" class="page-view hidden space-y-4">
+        <div>
+          <h2 class="text-base font-bold text-white">CI/CD & Source Control Integrations</h2>
+          <p class="text-xs text-[#9CA3AF]">Connect repository webhooks to automatically trigger impact scans on PRs</p>
+        </div>
 
-#### 💥 Blast Radius (Impacted Consumers):
-- **Order Service** (Direct caller &rarr; `getUserById`)
-- **Notification Service** (Indirect consumer &rarr; templates greeting)
-- **Recommendation Service** (Direct caller &rarr; user tier)
-- **Mobile App (iOS/Android)** (Direct client consumer)
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="p-5 rounded-xl bg-[#1F2937] border border-blue-500/30 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white text-sm">GitHub Actions Bot</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">CONNECTED</span>
+            </div>
+            <p class="text-xs text-[#9CA3AF]">Monitors PRs for OpenAPI spec changes and publishes automated blast radius comments.</p>
+            <div class="pt-2 border-t border-[#374151] flex justify-between items-center text-xs">
+              <span class="font-mono text-[#6B7280]">Webhook: Active</span>
+              <button onclick="showToast('GitHub Webhook simulated.', 'info')" class="text-blue-400 hover:underline">Test Webhook</button>
+            </div>
+          </div>
+          <div class="p-5 rounded-xl bg-[#1F2937] border border-[#374151] space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white text-sm">GitLab CI</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono text-[#6B7280] bg-[#111827]">NOT CONNECTED</span>
+            </div>
+            <p class="text-xs text-[#9CA3AF]">GitLab pipeline integration for merge request contract validation.</p>
+            <div class="pt-2 border-t border-[#374151]">
+              <button onclick="showToast('GitLab setup wizard initiated.', 'info')" class="text-xs text-blue-400 hover:underline">Configure &rarr;</button>
+            </div>
+          </div>
+          <div class="p-5 rounded-xl bg-[#1F2937] border border-[#374151] space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white text-sm">Generic Webhook</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">ACTIVE</span>
+            </div>
+            <p class="text-xs text-[#9CA3AF]">Receives JSON payloads from arbitrary CI systems to execute TraceWeaver scans.</p>
+            <div class="pt-2 border-t border-[#374151]">
+              <code class="text-[10px] text-[#9CA3AF]">/api/v1/integrations/webhook</code>
+            </div>
+          </div>
+        </div>
+      </div>
 
-#### 🧪 Selective Regression Replay Results:
-- Total Replays: 2 | **Failures**: 2 | Latency: ~43ms
-- Primary Regression: `STRUCTURAL_REGRESSION` (Field `name` missing from payload)
+      <!-- PAGE 12: Settings -->
+      <div id="page-settings" class="page-view hidden space-y-6">
+        <div>
+          <h2 class="text-base font-bold text-white">Platform Settings & Scoring Weights</h2>
+          <p class="text-xs text-[#9CA3AF]">Configure deterministic risk scoring weights, environment URLs, and redaction</p>
+        </div>
 
-#### 🛡️ Recommendation:
-> **DEPLOYMENT BLOCKED.** Maintain backward-compatible dual fields (`name` + `fullName`) during migration window.
+        <div class="p-5 rounded-xl bg-[#1F2937] border border-[#374151] space-y-4">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-white">Risk Scoring Weight Allocation (0-100 pts)</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label class="block text-[#9CA3AF] mb-1 font-medium">Change Severity Weight (Max 30 pts)</label>
+              <input type="range" min="10" max="40" value="30" oninput="showToast('Risk weight adjusted to ' + this.value, 'info')" class="w-full accent-blue-500">
+            </div>
+            <div>
+              <label class="block text-[#9CA3AF] mb-1 font-medium">Impact Breadth Weight (Max 25 pts)</label>
+              <input type="range" min="10" max="40" value="25" oninput="showToast('Impact breadth weight adjusted to ' + this.value, 'info')" class="w-full accent-blue-500">
+            </div>
+            <div>
+              <label class="block text-[#9CA3AF] mb-1 font-medium">Dependency Depth Weight (Max 15 pts)</label>
+              <input type="range" min="5" max="25" value="15" oninput="showToast('Dependency depth weight adjusted to ' + this.value, 'info')" class="w-full accent-blue-500">
+            </div>
+            <div>
+              <label class="block text-[#9CA3AF] mb-1 font-medium">Replay Failure Contribution (Max 15 pts)</label>
+              <input type="range" min="5" max="25" value="15" oninput="showToast('Replay failure weight adjusted to ' + this.value, 'info')" class="w-full accent-blue-500">
+            </div>
+          </div>
+        </div>
+
+        <div class="p-5 rounded-xl bg-[#1F2937] border border-[#374151] space-y-3">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-white">Data Redaction Rules (PII / Security)</h3>
+          <p class="text-xs text-[#9CA3AF]">Fields automatically masked with <code>[REDACTED]</code> prior to database insertion:</p>
+          <div class="flex flex-wrap gap-2 text-xs font-mono">
+            <span class="px-2 py-1 rounded bg-[#0B1120] border border-[#374151] text-emerald-400">authorization</span>
+            <span class="px-2 py-1 rounded bg-[#0B1120] border border-[#374151] text-emerald-400">token</span>
+            <span class="px-2 py-1 rounded bg-[#0B1120] border border-[#374151] text-emerald-400">password</span>
+            <span class="px-2 py-1 rounded bg-[#0B1120] border border-[#374151] text-emerald-400">secret</span>
+            <span class="px-2 py-1 rounded bg-[#0B1120] border border-[#374151] text-emerald-400">cookie</span>
+            <span class="px-2 py-1 rounded bg-[#0B1120] border border-[#374151] text-emerald-400">credit_card</span>
+            <span class="px-2 py-1 rounded bg-[#0B1120] border border-[#374151] text-emerald-400">api_key</span>
           </div>
         </div>
       </div>
@@ -514,414 +1142,1004 @@
     </main>
   </div>
 
+  <!-- MODAL: Create Project -->
+  <div id="modal-create-project" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 drawer-overlay">
+    <div class="bg-[#1F2937] border border-[#374151] rounded-2xl w-full max-w-md p-6 shadow-2xl text-xs space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-[#374151]">
+        <h3 class="text-sm font-bold text-white">Create New Workspace Project</h3>
+        <button onclick="closeModal('modal-create-project')" class="text-[#9CA3AF] hover:text-white">&times;</button>
+      </div>
+      <form onsubmit="handleCreateProject(event)" class="space-y-3">
+        <div>
+          <label class="block text-[#9CA3AF] mb-1 font-medium">Project Name *</label>
+          <input type="text" id="new-proj-name" required placeholder="e.g. Identity & Auth Subsystem" class="w-full bg-[#111827] border border-[#374151] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block text-[#9CA3AF] mb-1 font-medium">Description</label>
+          <textarea id="new-proj-desc" placeholder="Scope of services..." rows="2" class="w-full bg-[#111827] border border-[#374151] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"></textarea>
+        </div>
+        <div>
+          <label class="block text-[#9CA3AF] mb-1 font-medium">GitHub Repository URL</label>
+          <input type="url" id="new-proj-repo" placeholder="https://github.com/org/repo" class="w-full bg-[#111827] border border-[#374151] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block text-[#9CA3AF] mb-1 font-medium">Default Environment</label>
+          <select id="new-proj-env" class="w-full bg-[#111827] border border-[#374151] rounded-lg px-3 py-2 text-white focus:outline-none">
+            <option value="production">production</option>
+            <option value="staging">staging</option>
+          </select>
+        </div>
+        <div class="flex justify-end space-x-2 pt-2 border-t border-[#374151]">
+          <button type="button" onclick="closeModal('modal-create-project')" class="px-3 py-1.5 rounded bg-[#0B1120] text-[#9CA3AF]">Cancel</button>
+          <button type="submit" class="px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold">Create Project</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Add Service -->
+  <div id="modal-add-service" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 drawer-overlay">
+    <div class="bg-[#1F2937] border border-[#374151] rounded-2xl w-full max-w-md p-6 shadow-2xl text-xs space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-[#374151]">
+        <h3 class="text-sm font-bold text-white">Register Microservice</h3>
+        <button onclick="closeModal('modal-add-service')" class="text-[#9CA3AF] hover:text-white">&times;</button>
+      </div>
+      <form onsubmit="handleAddService(event)" class="space-y-3">
+        <div>
+          <label class="block text-[#9CA3AF] mb-1 font-medium">Service Name *</label>
+          <input type="text" id="new-srv-name" required placeholder="e.g. Fulfillment Service" class="w-full bg-[#111827] border border-[#374151] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block text-[#9CA3AF] mb-1 font-medium">Description</label>
+          <input type="text" id="new-srv-desc" placeholder="Warehouse fulfillment state..." class="w-full bg-[#111827] border border-[#374151] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block text-[#9CA3AF] mb-1 font-medium">Criticality Level</label>
+          <select id="new-srv-criticality" class="w-full bg-[#111827] border border-[#374151] rounded-lg px-3 py-2 text-white focus:outline-none">
+            <option value="CRITICAL">CRITICAL</option>
+            <option value="HIGH" selected>HIGH</option>
+            <option value="MEDIUM">MEDIUM</option>
+            <option value="LOW">LOW</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[#9CA3AF] mb-1 font-medium">Test Environment Base URL</label>
+          <input type="url" id="new-srv-url" placeholder="http://staging-fulfillment.internal:8080" class="w-full bg-[#111827] border border-[#374151] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+        </div>
+        <div class="flex justify-end space-x-2 pt-2 border-t border-[#374151]">
+          <button type="button" onclick="closeModal('modal-add-service')" class="px-3 py-1.5 rounded bg-[#0B1120] text-[#9CA3AF]">Cancel</button>
+          <button type="submit" class="px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold">Register Service</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Upload Spec -->
+  <div id="modal-upload-spec" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 drawer-overlay">
+    <div class="bg-[#1F2937] border border-[#374151] rounded-2xl w-full max-w-lg p-6 shadow-2xl text-xs space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-[#374151]">
+        <h3 class="text-sm font-bold text-white">Upload / Paste OpenAPI Specification</h3>
+        <button onclick="closeModal('modal-upload-spec')" class="text-[#9CA3AF] hover:text-white">&times;</button>
+      </div>
+      <form onsubmit="handleUploadSpec(event)" class="space-y-3">
+        <div>
+          <label class="block text-[#9CA3AF] mb-1 font-medium">Target Service</label>
+          <select id="spec-target-service" class="w-full bg-[#111827] border border-[#374151] rounded-lg px-3 py-2 text-white focus:outline-none">
+            <option value="srv_user">User Service</option>
+            <option value="srv_order">Order Service</option>
+            <option value="srv_inventory">Inventory Service</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[#9CA3AF] mb-1 font-medium">Version Tag</label>
+          <input type="text" id="spec-version-tag" required value="2.1.0" class="w-full bg-[#111827] border border-[#374151] rounded-lg px-3 py-2 text-white focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-[#9CA3AF] mb-1 font-medium">OpenAPI Content (JSON / YAML)</label>
+          <textarea id="spec-content-text" rows="6" class="w-full bg-[#111827] border border-[#374151] rounded-lg p-2.5 text-white font-mono text-[11px] focus:outline-none" placeholder='{"openapi": "3.0.3", "info": {...}}'></textarea>
+        </div>
+        <div class="flex justify-end space-x-2 pt-2 border-t border-[#374151]">
+          <button type="button" onclick="closeModal('modal-upload-spec')" class="px-3 py-1.5 rounded bg-[#0B1120] text-[#9CA3AF]">Cancel</button>
+          <button type="submit" class="px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold">Validate & Ingest</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Onboarding Guide -->
+  <div id="modal-onboarding" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 drawer-overlay">
+    <div class="bg-[#1F2937] border border-[#374151] rounded-2xl w-full max-w-lg p-6 shadow-2xl text-xs space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-[#374151]">
+        <h3 class="text-sm font-bold text-white">TraceWeaver Developer Workflow</h3>
+        <button onclick="closeModal('modal-onboarding')" class="text-[#9CA3AF] hover:text-white">&times;</button>
+      </div>
+      <div class="space-y-3 text-xs text-[#9CA3AF]">
+        <div class="flex items-start space-x-3">
+          <div class="w-5 h-5 rounded bg-blue-600/30 text-blue-400 font-bold flex items-center justify-center font-mono">1</div>
+          <div><strong class="text-white">Create Project & Register Services:</strong> Define your microservice architecture boundary.</div>
+        </div>
+        <div class="flex items-start space-x-3">
+          <div class="w-5 h-5 rounded bg-blue-600/30 text-blue-400 font-bold flex items-center justify-center font-mono">2</div>
+          <div><strong class="text-white">Ingest OpenAPI Contracts:</strong> Upload v1 and v2 specifications. The parser normalizes schemas.</div>
+        </div>
+        <div class="flex items-start space-x-3">
+          <div class="w-5 h-5 rounded bg-blue-600/30 text-blue-400 font-bold flex items-center justify-center font-mono">3</div>
+          <div><strong class="text-white">Run Impact Analysis:</strong> Rule-based diff engine flags breaking mutations and traverses upstream callers.</div>
+        </div>
+        <div class="flex items-start space-x-3">
+          <div class="w-5 h-5 rounded bg-blue-600/30 text-blue-400 font-bold flex items-center justify-center font-mono">4</div>
+          <div><strong class="text-white">Request Replay & Verification:</strong> Replay sanitized traffic to verify real-world regressions.</div>
+        </div>
+      </div>
+      <div class="flex justify-end pt-3 border-t border-[#374151]">
+        <button onclick="closeModal('modal-onboarding')" class="px-4 py-1.5 rounded bg-blue-600 text-white font-semibold">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRAWER: Change Details Inspection (Slide-Over) -->
+  <div id="drawer-change-detail" class="hidden fixed inset-0 z-50 flex justify-end drawer-overlay">
+    <div class="w-full max-w-md bg-[#1F2937] border-l border-[#374151] h-full p-6 shadow-2xl flex flex-col justify-between overflow-y-auto custom-scrollbar text-xs">
+      <div>
+        <div class="flex items-center justify-between pb-3 border-b border-[#374151]">
+          <span class="text-[10px] uppercase font-mono font-bold text-[#6B7280]">Change Detail Inspector</span>
+          <button onclick="closeDrawer('drawer-change-detail')" class="text-[#9CA3AF] hover:text-white text-base">&times;</button>
+        </div>
+        <div id="drawer-change-body" class="mt-4 space-y-4"></div>
+      </div>
+      <div class="pt-4 border-t border-[#374151]">
+        <button onclick="closeDrawer('drawer-change-detail')" class="w-full py-2 rounded bg-[#0B1120] hover:bg-[#111827] border border-[#374151] text-white font-semibold">
+          Close Drawer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Client-Side State Engine & Interactivity Scripts -->
   <script>
-    // State Store
-    let currentTab = 'overview';
+    // Global State
+    let activePage = 'overview';
+    let activeProject = 'proj_ecommerce';
+    let blastHighlightEnabled = true;
 
-    const fallbackServices = [
-      { id: "srv_user", name: "User Service", description: "Identity & Accounts", environment: "production", criticality: "HIGH", specVersion: "2.0.0" },
-      { id: "srv_order", name: "Order Service", description: "Order Lifecycle & Cart", environment: "production", criticality: "CRITICAL", specVersion: "1.4.0" },
-      { id: "srv_product", name: "Product Service", description: "Catalog & Pricing", environment: "production", criticality: "MEDIUM", specVersion: "1.2.0" },
-      { id: "srv_inventory", name: "Inventory Service", description: "Warehouse Stock", environment: "production", criticality: "HIGH", specVersion: "1.1.0" },
-      { id: "srv_payment", name: "Payment Service", description: "Billing & Cards", environment: "production", criticality: "CRITICAL", specVersion: "2.1.0" },
-      { id: "srv_recommendation", name: "Recommendation Service", description: "ML Feeds", environment: "staging", criticality: "LOW", specVersion: "1.0.0" },
-      { id: "srv_notification", name: "Notification Service", description: "Email & Push SMS", environment: "production", criticality: "MEDIUM", specVersion: "1.0.4" }
+    // Toast Notification System
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast-item';
+      
+      let icon = 'ℹ️';
+      if (type === 'success') icon = '✅';
+      if (type === 'warning') icon = '⚠️';
+      if (type === 'danger') icon = '🚨';
+
+      toast.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // Navigation Router
+    function navigateTo(pageId) {
+      activePage = pageId;
+
+      // Update URL hash without reload
+      window.location.hash = pageId;
+
+      // Hide all page views
+      document.querySelectorAll('.page-view').forEach(p => p.classList.add('hidden'));
+
+      // Show selected page
+      const target = document.getElementById(`page-${pageId}`);
+      if (target) {
+        target.classList.remove('hidden');
+      }
+
+      // Update sidebar nav active highlight
+      document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById(`nav-${pageId}`);
+      if (activeBtn) {
+        activeBtn.classList.add('active');
+      }
+
+      // Update Topbar Breadcrumb
+      const pageTitles = {
+        overview: 'Overview',
+        projects: 'Projects',
+        services: 'Services',
+        analysis: 'Change Impact Analysis',
+        graph: 'Dependency Graph',
+        tests: 'Regression Tests',
+        replay: 'Request Replay',
+        reports: 'Risk Reports',
+        specifications: 'API Specifications',
+        integrations: 'Integrations',
+        settings: 'Settings',
+        login: 'Login'
+      };
+      const breadcrumbEl = document.getElementById('breadcrumb-page');
+      if (breadcrumbEl) breadcrumbEl.textContent = pageTitles[pageId] || pageId;
+
+      // Update Dynamic Primary Button
+      const actionBtn = document.getElementById('primary-action-btn');
+      const actionLabel = document.getElementById('primary-action-label');
+      if (pageId === 'services') {
+        actionLabel.textContent = 'Add Service';
+      } else if (pageId === 'projects') {
+        actionLabel.textContent = 'Create Project';
+      } else if (pageId === 'replay') {
+        actionLabel.textContent = 'Start Replay';
+      } else {
+        actionLabel.textContent = 'Run Analysis';
+      }
+
+      // Trigger sub-renderers if needed
+      if (pageId === 'graph') {
+        renderDependencyGraphSvg();
+      } else if (pageId === 'analysis') {
+        renderAnalysisBlastGraph();
+      }
+    }
+
+    function executePrimaryAction() {
+      if (activePage === 'services') {
+        openModal('modal-add-service');
+      } else if (activePage === 'projects') {
+        openModal('modal-create-project');
+      } else if (activePage === 'replay') {
+        triggerReplayNow();
+      } else {
+        triggerAnalysisNow();
+      }
+    }
+
+    // Modal Helpers
+    function openModal(modalId) {
+      const el = document.getElementById(modalId);
+      if (el) el.classList.remove('hidden');
+    }
+    function closeModal(modalId) {
+      const el = document.getElementById(modalId);
+      if (el) el.classList.add('hidden');
+    }
+
+    // Drawer Helpers
+    function openDrawer(drawerId) {
+      const el = document.getElementById(drawerId);
+      if (el) el.classList.remove('hidden');
+    }
+    function closeDrawer(drawerId) {
+      const el = document.getElementById(drawerId);
+      if (el) el.classList.add('hidden');
+    }
+
+    // Data Stores
+    const demoProjectsData = [
+      { id: 'proj_ecommerce', name: 'Core Commerce Platform', slug: 'core-commerce', description: 'High-throughput microservices architecture powering checkout, inventory, and payments.', servicesCount: 7, operationsCount: 28, risk: 'CRITICAL', env: 'production', repo: 'github.com/traceweaver-demo/commerce' },
+      { id: 'proj_fintech', name: 'Fintech Core Gateway', slug: 'fintech-gateway', description: 'PCI-DSS certified payment orchestrator, ledger, and anti-fraud verification pipeline.', servicesCount: 4, operationsCount: 16, risk: 'LOW', env: 'staging', repo: 'github.com/traceweaver-demo/fintech' }
     ];
 
-    const fallbackDiffChanges = [
+    const demoServicesData = [
+      { id: 'srv_user', name: 'User Service', env: 'production', ops: 6, deps: 0, consumers: 4, criticality: 'HIGH', spec: 'v2.0.0', status: 'BREAKING_CHANGES' },
+      { id: 'srv_order', name: 'Order Service', env: 'production', ops: 5, deps: 4, consumers: 2, criticality: 'CRITICAL', spec: 'v1.4.0', status: 'DEGRADED' },
+      { id: 'srv_product', name: 'Product Service', env: 'production', ops: 8, deps: 0, consumers: 2, criticality: 'MEDIUM', spec: 'v1.2.0', status: 'HEALTHY' },
+      { id: 'srv_inventory', name: 'Inventory Service', env: 'production', ops: 4, deps: 0, consumers: 1, criticality: 'HIGH', spec: 'v1.1.0', status: 'HEALTHY' },
+      { id: 'srv_payment', name: 'Payment Service', env: 'production', ops: 5, deps: 0, consumers: 1, criticality: 'CRITICAL', spec: 'v2.1.0', status: 'HEALTHY' },
+      { id: 'srv_notification', name: 'Notification Service', env: 'production', ops: 3, deps: 1, consumers: 0, criticality: 'MEDIUM', spec: 'v1.0.4', status: 'DEGRADED' },
+      { id: 'srv_recommendation', name: 'Recommendation Service', env: 'staging', ops: 2, deps: 2, consumers: 0, criticality: 'LOW', spec: 'v1.0.0', status: 'DEGRADED' }
+    ];
+
+    const demoChangesData = [
       {
-        id: "chg_field_rem_name",
-        type: "RESPONSE_FIELD_REMOVED",
-        category: "RESPONSE_FIELD",
-        severity: "CRITICAL",
-        compatibility: "BREAKING",
-        oldValue: "name (string)",
-        newValue: "[REMOVED]",
-        jsonPointer: "/paths/~1api~1v1~1users~1{id}/responses/200/schema/properties/name",
-        operationId: "getUserById",
-        description: "Response field 'name' was completely removed from UserProfile schema",
-        reason: "Downstream consumers expecting 'name' will fail with null pointer or deserialization crashes."
+        id: 'chg_field_rem_name',
+        title: "Field 'name' removed from UserProfile",
+        op: 'getUserById',
+        pointer: '/paths/~1users~1{id}/responses/200/properties/name',
+        type: 'RESPONSE_FIELD_REMOVED',
+        severity: 'CRITICAL',
+        compat: 'BREAKING',
+        oldVal: 'name: string (required)',
+        newVal: '[REMOVED]',
+        rule: 'Contract Immutability Rule #1: Removing required response fields breaks dependent deserializers.',
+        reason: 'Consumers reading UserProfile.name fail with null pointer or undefined reference crashes.',
+        consumers: ['Order Service', 'Notification Service', 'Mobile App (iOS/Android)']
       },
       {
-        id: "chg_field_type_tier",
-        type: "RESPONSE_FIELD_TYPE_CHANGED",
-        category: "RESPONSE_FIELD",
-        severity: "HIGH",
-        compatibility: "BREAKING",
-        oldValue: "tier (string)",
-        newValue: "tier (integer)",
-        jsonPointer: "/components/schemas/UserProfile/properties/tier",
-        operationId: "getUserById",
-        description: "Field 'tier' changed type from string to integer",
-        reason: "Strict JSON type deserialization in downstream microservices will fail."
+        id: 'chg_field_type_tier',
+        title: "Field 'tier' mutated from string to integer",
+        op: 'getUserById',
+        pointer: '/components/schemas/UserProfile/properties/tier',
+        type: 'RESPONSE_FIELD_TYPE_CHANGED',
+        severity: 'HIGH',
+        compat: 'BREAKING',
+        oldVal: 'tier: string ("gold")',
+        newVal: 'tier: integer (1)',
+        rule: 'Type Safety Rule #4: Type mutation without fallback prevents JSON parsing in typed models.',
+        reason: 'Recommendation Service fails schema validation when attempting to cast integer into string.',
+        consumers: ['Recommendation Service']
       },
       {
-        id: "chg_enum_rem_suspended",
-        type: "ENUM_VALUES_REMOVED",
-        category: "RESPONSE_FIELD",
-        severity: "MEDIUM",
-        compatibility: "POTENTIALLY_BREAKING",
-        oldValue: "enum ['ACTIVE', 'SUSPENDED', 'PENDING']",
-        newValue: "enum ['ACTIVE', 'PENDING']",
-        jsonPointer: "/components/schemas/UserProfile/properties/status",
-        operationId: "getUserById",
-        description: "Enum value 'SUSPENDED' was removed from user status",
-        reason: "Consumers expecting 'SUSPENDED' may experience switch-case fallthrough or unhandled states."
+        id: 'chg_req_field_age',
+        title: "Required property 'ageVerification' added to registration",
+        op: 'createUser',
+        pointer: '/components/schemas/CreateUserRequest/properties/ageVerification',
+        type: 'REQUIRED_REQUEST_FIELD_ADDED',
+        severity: 'HIGH',
+        compat: 'BREAKING',
+        oldVal: '[NONE]',
+        newVal: 'ageVerification: boolean (required)',
+        rule: 'Forward Compatibility Rule #2: Introducing mandatory request fields fails older clients with HTTP 400.',
+        reason: 'Existing mobile app cannot register accounts without app store binary update.',
+        consumers: ['Mobile App (iOS/Android)', 'Web Storefront (React)']
       },
       {
-        id: "chg_req_field_age",
-        type: "REQUIRED_REQUEST_FIELD_ADDED",
-        category: "REQUEST_BODY",
-        severity: "HIGH",
-        compatibility: "BREAKING",
-        oldValue: "[NONE]",
-        newValue: "ageVerification (boolean, required)",
-        jsonPointer: "/components/schemas/CreateUserRequest/properties/ageVerification",
-        operationId: "createUser",
-        description: "New required boolean field 'ageVerification' added to user registration request",
-        reason: "Existing callers without this parameter will fail HTTP 400 validation."
+        id: 'chg_enum_rem_suspended',
+        title: "Enum value 'SUSPENDED' removed from status",
+        op: 'getUserById',
+        pointer: '/components/schemas/UserProfile/properties/status',
+        type: 'ENUM_VALUES_REMOVED',
+        severity: 'MEDIUM',
+        compat: 'POTENTIALLY_BREAKING',
+        oldVal: "['ACTIVE', 'SUSPENDED', 'PENDING']",
+        newVal: "['ACTIVE', 'PENDING']",
+        rule: 'Enum Contraction Rule #3: Removing enum variants triggers switch-case fallthrough.',
+        reason: 'Clients expecting SUSPENDED status may branch into invalid unhandled exceptions.',
+        consumers: ['Recommendation Service']
       },
       {
-        id: "chg_field_add_avatar",
-        type: "OPTIONAL_RESPONSE_FIELD_ADDED",
-        category: "RESPONSE_FIELD",
-        severity: "LOW",
-        compatibility: "NON_BREAKING",
-        oldValue: "[NONE]",
-        newValue: "avatarUrl (string)",
-        jsonPointer: "/components/schemas/UserProfile/properties/avatarUrl",
-        operationId: "getUserById",
-        description: "Optional response field 'avatarUrl' introduced",
-        reason: "Tolerant consumers can safely ignore unknown additional response properties."
+        id: 'chg_field_add_avatar',
+        title: "Optional field 'avatarUrl' introduced",
+        op: 'getUserById',
+        pointer: '/components/schemas/UserProfile/properties/avatarUrl',
+        type: 'OPTIONAL_RESPONSE_FIELD_ADDED',
+        severity: 'LOW',
+        compat: 'NON_BREAKING',
+        oldVal: '[NONE]',
+        newVal: 'avatarUrl: string (optional)',
+        rule: 'Tolerant Reader Pattern: Non-required additions can be safely ignored by consumers.',
+        reason: 'Backward compatible for all existing client readers.',
+        consumers: []
       }
     ];
 
-    const fallbackTests = [
-      { testId: "tc_usr_01", name: "Verify User Profile Deserialization", service: "User Service", type: "CONTRACT", duration: 85, result: "PASSED", selected: true, reason: "Directly tests modified API service" },
-      { testId: "tc_ord_01", name: "Order Service User Validation Flow", service: "Order Service", type: "INTEGRATION", duration: 240, result: "FAILED", selected: true, reason: "Downstream consumer service in blast radius" },
-      { testId: "tc_rec_01", name: "Recommendation Engine User Persona Extraction", service: "Recommendation Service", type: "REGRESSION", duration: 310, result: "PASSED", selected: true, reason: "Consumes user tier property" },
-      { testId: "tc_notif_01", name: "Notification Dispatch Recipient Greeting", service: "Notification Service", type: "REGRESSION", duration: 140, result: "FAILED", selected: true, reason: "Templates user name into outbound emails" },
-      { testId: "tc_inv_01", name: "Inventory Reservation Lock Test", service: "Inventory Service", type: "UNIT", duration: 95, result: "PASSED", selected: false, reason: "Outside blast radius" },
-      { testId: "tc_e2e_checkout", name: "E2E Cart Checkout Full Journey", service: "Order Service", type: "END_TO_END", duration: 950, result: "PASSED", selected: false, reason: "Omitted in optimized mode (duration saver)" }
+    const demoTestsData = [
+      { id: 'tc_usr_01', name: 'Verify User Profile Deserialization', srv: 'User Service', type: 'CONTRACT', priority: 1, duration: '85ms', result: 'PASSED', selected: true, reason: 'Directly tests modified API contract' },
+      { id: 'tc_ord_01', name: 'Order Service User Validation Flow', srv: 'Order Service', type: 'INTEGRATION', priority: 1, duration: '240ms', result: 'FAILED', selected: true, reason: 'Downstream caller reading removed field' },
+      { id: 'tc_rec_01', name: 'Recommendation Engine Persona Extraction', srv: 'Recommendation', type: 'REGRESSION', priority: 2, duration: '310ms', result: 'PASSED', selected: true, reason: 'Consumes mutated tier property' },
+      { id: 'tc_notif_01', name: 'Notification Dispatch Recipient Greeting', srv: 'Notification', type: 'REGRESSION', priority: 2, duration: '140ms', result: 'FAILED', selected: true, reason: 'Templates user name into email' },
+      { id: 'tc_inv_01', name: 'Inventory Reservation Lock Test', srv: 'Inventory', type: 'UNIT', priority: 3, duration: '95ms', result: 'PASSED', selected: false, reason: 'Outside blast radius' },
+      { id: 'tc_e2e_checkout', name: 'E2E Cart Checkout Full Journey', srv: 'Order Service', type: 'END_TO_END', priority: 1, duration: '950ms', result: 'PASSED', selected: false, reason: 'Omitted in optimized mode (time saver)' }
     ];
 
-    const fallbackReplay = [
-      {
-        recordingId: "rec_usr_001",
-        method: "GET",
-        path: "/api/v1/users/usr_1001",
-        expectedStatus: 200,
-        actualStatus: 200,
-        latency: "45ms vs 42ms",
-        regression: "STRUCTURAL_REGRESSION",
-        summary: "Missing required property 'name' in response; found 'fullName': 'Alex Chen'"
-      },
-      {
-        recordingId: "rec_usr_002",
-        method: "GET",
-        path: "/api/v1/users/usr_1002",
-        expectedStatus: 200,
-        actualStatus: 200,
-        latency: "41ms vs 38ms",
-        regression: "STRUCTURAL_REGRESSION",
-        summary: "Missing required property 'name' in response; found 'fullName': 'Sarah Connor'"
+    // Render Overview Activity & Runs
+    function renderOverviewData() {
+      const runsTbody = document.getElementById('overview-recent-runs');
+      if (runsTbody) {
+        runsTbody.innerHTML = `
+          <tr onclick="navigateTo('analysis')" class="hover:bg-[#111827] cursor-pointer transition">
+            <td class="py-2.5 font-bold text-white">User Service Overhaul</td>
+            <td class="py-2.5 text-[#9CA3AF]">User Service</td>
+            <td class="py-2.5 font-mono text-xs"><code class="text-blue-400">1.0.0</code> &rarr; <code class="text-rose-400">2.0.0</code></td>
+            <td class="py-2.5"><span class="badge-critical px-2 py-0.5 rounded font-mono font-bold">84.5 (CRITICAL)</span></td>
+            <td class="py-2.5 text-rose-400 font-bold">&#x25CF; BLOCKED</td>
+            <td class="py-2.5 text-[#6B7280]">10m ago</td>
+          </tr>
+          <tr class="hover:bg-[#111827] cursor-pointer transition">
+            <td class="py-2.5 font-bold text-white">Order Service Minor Patch</td>
+            <td class="py-2.5 text-[#9CA3AF]">Order Service</td>
+            <td class="py-2.5 font-mono text-xs"><code class="text-blue-400">1.3.0</code> &rarr; <code class="text-emerald-400">1.4.0</code></td>
+            <td class="py-2.5"><span class="badge-low px-2 py-0.5 rounded font-mono font-bold">18.0 (LOW)</span></td>
+            <td class="py-2.5 text-emerald-400 font-bold">&#x25CF; PASSED</td>
+            <td class="py-2.5 text-[#6B7280]">4d ago</td>
+          </tr>
+        `;
       }
-    ];
 
-    function showTab(tabName) {
-      currentTab = tabName;
-      document.querySelectorAll('.tab-pane').forEach(function(el) { el.classList.add('hidden'); });
-      document.querySelectorAll('.nav-btn').forEach(function(btn) {
-        btn.classList.remove('bg-brand-600/20', 'text-brand-300', 'border', 'border-brand-500/30');
-        btn.classList.add('text-slate-400');
+      const activityDiv = document.getElementById('overview-activity-feed');
+      if (activityDiv) {
+        activityDiv.innerHTML = `
+          <div class="flex items-start space-x-3 text-xs">
+            <div class="w-2 h-2 rounded-full bg-rose-500 mt-1.5 flex-shrink-0"></div>
+            <div>
+              <div class="font-bold text-white">Impact Analysis Completed &bull; <span class="text-rose-400">Critical Risk (84.5)</span></div>
+              <p class="text-[#9CA3AF] text-[11px]">User Service v1 &rarr; v2. 3 breaking changes detected across 3 downstream services.</p>
+              <span class="text-[10px] text-[#6B7280]">10 minutes ago</span>
+            </div>
+          </div>
+          <div class="flex items-start space-x-3 text-xs">
+            <div class="w-2 h-2 rounded-full bg-red-500 mt-1.5 flex-shrink-0"></div>
+            <div>
+              <div class="font-bold text-white">Regression Replay Failed &bull; <span class="text-red-400">2 Mismatches</span></div>
+              <p class="text-[#9CA3AF] text-[11px]">Historical traffic confirmed UserProfile.name omission crash on staging.</p>
+              <span class="text-[10px] text-[#6B7280]">7 minutes ago</span>
+            </div>
+          </div>
+          <div class="flex items-start space-x-3 text-xs">
+            <div class="w-2 h-2 rounded-full bg-blue-500 mt-1.5 flex-shrink-0"></div>
+            <div>
+              <div class="font-bold text-white">OpenAPI Specification Uploaded</div>
+              <p class="text-[#9CA3AF] text-[11px]">User Service v2.0.0 specification ingested and normalized into AST graph.</p>
+              <span class="text-[10px] text-[#6B7280]">15 minutes ago</span>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // Render Projects Page
+    function renderProjectsList() {
+      const container = document.getElementById('projects-list-container');
+      if (!container) return;
+      container.innerHTML = demoProjectsData.map(p => `
+        <div class="p-5 rounded-xl bg-[#1F2937] border border-[#374151] hover:border-blue-500/50 transition space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white">${p.name}</h3>
+            <span class="${p.risk === 'CRITICAL' ? 'badge-critical' : 'badge-low'} px-2 py-0.5 rounded text-[10px] font-mono font-bold">${p.risk} RISK</span>
+          </div>
+          <p class="text-xs text-[#9CA3AF]">${p.description}</p>
+          <div class="pt-3 border-t border-[#374151] flex justify-between items-center text-xs text-[#9CA3AF]">
+            <span>Services: <strong class="text-white">${p.servicesCount}</strong></span>
+            <span>Operations: <strong class="text-white">${p.operationsCount}</strong></span>
+            <span>Env: <strong class="text-white font-mono">${p.env}</strong></span>
+          </div>
+          <div class="flex justify-end pt-2">
+            <button onclick="navigateTo('overview')" class="text-xs text-blue-400 hover:text-blue-300 font-semibold">Open Project &rarr;</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Render Services Page
+    function renderServicesList(filter = 'ALL') {
+      const tbody = document.getElementById('services-table-body');
+      if (!tbody) return;
+      const filtered = demoServicesData.filter(s => filter === 'ALL' || s.criticality === filter);
+      tbody.innerHTML = filtered.map(s => `
+        <tr class="hover:bg-[#111827] transition">
+          <td class="py-3 font-bold text-white">${s.name}</td>
+          <td class="py-3 font-mono text-[#9CA3AF]">${s.env}</td>
+          <td class="py-3 text-white font-mono">${s.ops}</td>
+          <td class="py-3 text-[#9CA3AF] font-mono">${s.deps} direct / ${s.consumers} callers</td>
+          <td class="py-3">
+            <span class="${s.criticality === 'CRITICAL' ? 'badge-critical' : s.criticality === 'HIGH' ? 'badge-high' : 'badge-medium'} px-2 py-0.5 rounded text-[10px] font-mono font-bold">${s.criticality}</span>
+          </td>
+          <td class="py-3 font-mono text-blue-400">${s.spec}</td>
+          <td class="py-3">
+            <span class="text-xs font-semibold ${s.status === 'BREAKING_CHANGES' ? 'text-rose-400' : s.status === 'DEGRADED' ? 'text-amber-400' : 'text-emerald-400'}">&#x25CF; ${s.status.replace('_', ' ')}</span>
+          </td>
+          <td class="py-3 text-right">
+            <button onclick="navigateTo('analysis')" class="text-blue-400 hover:text-blue-300 font-medium">Analyze</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function filterServicesList(val) {
+      renderServicesList(val);
+    }
+
+    // Render Changes Tab Table
+    function renderAnalysisChanges() {
+      const tbody = document.getElementById('analysis-changes-table');
+      if (!tbody) return;
+      tbody.innerHTML = demoChangesData.map(c => `
+        <tr onclick="inspectChangeDetail('${c.id}')" class="hover:bg-[#0B1120] cursor-pointer transition">
+          <td class="py-3 font-bold text-white">${c.title}</td>
+          <td class="py-3 font-mono text-[#9CA3AF]">${c.op}</td>
+          <td class="py-3 font-mono text-[#6B7280] text-[11px] truncate max-w-xs">${c.pointer}</td>
+          <td class="py-3 font-mono text-[10px]">${c.type}</td>
+          <td class="py-3"><span class="${c.severity === 'CRITICAL' ? 'badge-critical' : 'badge-high'} px-1.5 py-0.5 rounded text-[10px] font-mono font-bold">${c.severity}</span></td>
+          <td class="py-3"><span class="${c.compat === 'BREAKING' ? 'badge-critical' : 'badge-low'} px-1.5 py-0.5 rounded text-[10px] font-mono font-bold">${c.compat}</span></td>
+          <td class="py-3 text-right text-blue-400 font-semibold">Inspect &rarr;</td>
+        </tr>
+      `).join('');
+    }
+
+    function inspectChangeDetail(changeId) {
+      const c = demoChangesData.find(item => item.id === changeId);
+      if (!c) return;
+      const body = document.getElementById('drawer-change-body');
+      body.innerHTML = `
+        <div>
+          <span class="${c.compat === 'BREAKING' ? 'badge-critical' : 'badge-low'} px-2 py-0.5 rounded text-[10px] font-mono font-bold">${c.compat}</span>
+          <h3 class="text-sm font-bold text-white mt-2">${c.title}</h3>
+          <div class="text-[11px] font-mono text-[#9CA3AF] mt-0.5">Operation: ${c.op}</div>
+        </div>
+
+        <div class="p-3 rounded-lg bg-[#0B1120] border border-[#374151] space-y-2 font-mono text-[11px]">
+          <div><span class="text-[#6B7280]">Old Schema:</span> <span class="text-rose-400 font-bold">${c.oldVal}</span></div>
+          <div><span class="text-[#6B7280]">New Schema:</span> <span class="text-emerald-400 font-bold">${c.newVal}</span></div>
+          <div class="text-[10px] text-[#6B7280] pt-1 border-t border-[#374151] break-all">${c.pointer}</div>
+        </div>
+
+        <div class="space-y-1">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-white">Rule Enforced</span>
+          <p class="text-[#9CA3AF] text-xs bg-[#111827] p-2.5 rounded border border-[#374151]">${c.rule}</p>
+        </div>
+
+        <div class="space-y-1">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-white">Downstream Consequence</span>
+          <p class="text-rose-300 text-xs bg-rose-950/20 p-2.5 rounded border border-rose-900/40">${c.reason}</p>
+        </div>
+
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-white">Impacted Consumers (${c.consumers.length})</span>
+          <div class="mt-1 space-y-1">
+            ${c.consumers.map(con => `<div class="p-1.5 rounded bg-[#0B1120] text-white border border-[#374151] font-mono text-[11px]">&#x25CF; ${con}</div>`).join('')}
+          </div>
+        </div>
+      `;
+      openDrawer('drawer-change-detail');
+    }
+
+    function switchAnalysisTab(tabName) {
+      document.querySelectorAll('.analysis-subtab').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('[id^="tab-btn-"]').forEach(btn => {
+        btn.classList.remove('text-blue-400', 'border-b-2', 'border-blue-500', 'font-semibold');
+        btn.classList.add('text-[#9CA3AF]');
       });
 
-      var activePane = document.getElementById('tab-' + tabName);
-      if (activePane) activePane.classList.remove('hidden');
+      const activeEl = document.getElementById(`analysis-tab-${tabName}`);
+      if (activeEl) activeEl.classList.remove('hidden');
 
-      var activeBtn = document.getElementById('nav-' + tabName);
+      const activeBtn = document.getElementById(`tab-btn-${tabName}`);
       if (activeBtn) {
-        activeBtn.classList.remove('text-slate-400');
-        activeBtn.classList.add('bg-brand-600/20', 'text-brand-300', 'border', 'border-brand-500/30');
+        activeBtn.classList.remove('text-[#9CA3AF]');
+        activeBtn.classList.add('text-blue-400', 'border-b-2', 'border-blue-500', 'font-semibold');
       }
 
       if (tabName === 'graph') {
-        renderDependencyGraph();
+        renderAnalysisBlastGraph();
       }
     }
 
-    function renderServices() {
-      var container = document.getElementById('servicesList');
-      if (!container) return;
-      container.innerHTML = fallbackServices.map(function(s) {
-        var badgeClass = s.criticality === 'CRITICAL' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
-                         s.criticality === 'HIGH' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
-                         'bg-slate-700 text-slate-300';
-        return '<div class="p-5 rounded-xl bg-surface-850 border border-surface-800 hover:border-surface-700 transition">' +
-          '<div class="flex items-center justify-between">' +
-            '<h3 class="text-sm font-bold text-white">' + s.name + '</h3>' +
-            '<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ' + badgeClass + '">' + s.criticality + ' CRITICALITY</span>' +
-          '</div>' +
-          '<p class="text-xs text-slate-400 mt-1">' + s.description + '</p>' +
-          '<div class="mt-4 pt-3 border-t border-surface-800 flex justify-between items-center text-xs text-slate-400">' +
-            '<span>Spec: <strong class="text-slate-200 font-mono">v' + s.specVersion + '</strong></span>' +
-            '<span>Env: <strong class="text-slate-200 capitalize font-mono">' + s.environment + '</strong></span>' +
-          '</div>' +
-        '</div>';
-      }).join('');
+    // Render Regression Tests List
+    function renderTestsList() {
+      const tbody = document.getElementById('regression-tests-table-body');
+      if (tbody) {
+        tbody.innerHTML = demoTestsData.map(t => `
+          <tr class="hover:bg-[#111827] transition">
+            <td class="py-2.5 font-mono font-bold text-white">${t.id}</td>
+            <td class="py-2.5 font-semibold text-white">${t.name}</td>
+            <td class="py-2.5 text-[#9CA3AF]">${t.srv}</td>
+            <td class="py-2.5"><span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-[#0B1120] text-[#9CA3AF]">${t.type}</span></td>
+            <td class="py-2.5 font-mono font-bold text-white">P${t.priority}</td>
+            <td class="py-2.5 font-mono text-[#9CA3AF]">${t.duration}</td>
+            <td class="py-2.5"><span class="${t.result === 'PASSED' ? 'badge-low' : 'badge-critical'} px-2 py-0.5 rounded text-[10px] font-mono font-bold">${t.result}</span></td>
+            <td class="py-2.5"><span class="${t.selected ? 'text-blue-400 font-bold' : 'text-[#6B7280]'} text-xs font-mono">${t.selected ? 'SELECTED' : 'SKIPPED'}</span></td>
+          </tr>
+        `).join('');
+      }
+
+      const analysisTestsDiv = document.getElementById('analysis-tests-list');
+      if (analysisTestsDiv) {
+        analysisTestsDiv.innerHTML = demoTestsData.filter(t => t.selected).map(t => `
+          <div class="p-3 rounded-lg bg-[#0B1120] border border-[#374151] flex items-center justify-between text-xs">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="font-mono font-bold text-white">${t.id}</span>
+                <span class="font-semibold text-white">${t.name}</span>
+                <span class="${t.result === 'PASSED' ? 'badge-low' : 'badge-critical'} px-1.5 rounded text-[9px] font-mono font-bold">${t.result}</span>
+              </div>
+              <p class="text-[#9CA3AF] text-[11px] mt-0.5">${t.reason}</p>
+            </div>
+            <div class="text-right font-mono text-[#9CA3AF]">${t.duration}</div>
+          </div>
+        `).join('');
+      }
     }
 
-    function renderDiffChanges(filter) {
-      if (!filter) filter = 'ALL';
-      var container = document.getElementById('diffChangesContainer');
-      if (!container) return;
-      var filtered = fallbackDiffChanges.filter(function(c) {
-        return filter === 'ALL' || c.compatibility === filter;
-      });
-      
-      container.innerHTML = filtered.map(function(c) {
-        var badgeClass = c.compatibility === 'BREAKING' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' :
-                         c.compatibility === 'POTENTIALLY_BREAKING' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' :
-                         'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
-        var borderClass = c.compatibility === 'BREAKING' ? 'border-rose-500/30 bg-rose-500/[0.02]' : 'border-surface-800';
+    // Render Replay List
+    function renderReplayPageData() {
+      const leftList = document.getElementById('replay-request-list');
+      if (leftList) {
+        leftList.innerHTML = `
+          <div class="p-2.5 rounded-lg bg-[#0B1120] border border-rose-500/40 cursor-pointer space-y-1">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-mono font-bold text-blue-400">GET</span>
+              <span class="badge-critical px-1.5 py-0.5 rounded text-[9px] font-mono font-bold">FAILED</span>
+            </div>
+            <div class="font-mono text-[11px] text-white truncate">/api/v1/users/usr_1001</div>
+            <div class="text-[10px] text-[#9CA3AF]">Baseline: 200 OK &bull; 42ms</div>
+          </div>
+          <div class="p-2.5 rounded-lg bg-[#0B1120] border border-rose-500/40 cursor-pointer space-y-1">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-mono font-bold text-blue-400">GET</span>
+              <span class="badge-critical px-1.5 py-0.5 rounded text-[9px] font-mono font-bold">FAILED</span>
+            </div>
+            <div class="font-mono text-[11px] text-white truncate">/api/v1/users/usr_1002</div>
+            <div class="text-[10px] text-[#9CA3AF]">Baseline: 200 OK &bull; 38ms</div>
+          </div>
+        `;
+      }
 
-        return '<div class="p-4 rounded-xl bg-surface-850 border ' + borderClass + '">' +
-          '<div class="flex items-center justify-between pb-2 border-b border-surface-800">' +
-            '<div class="flex items-center space-x-2">' +
-              '<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ' + badgeClass + '">' + c.compatibility + '</span>' +
-              '<span class="text-xs font-mono font-semibold text-white">' + c.type + '</span>' +
-            '</div>' +
-            '<span class="text-[11px] font-mono text-slate-400">' + c.operationId + '</span>' +
-          '</div>' +
-          '<p class="text-xs text-slate-200 mt-2 font-medium">' + c.description + '</p>' +
-          '<div class="mt-2 text-xs font-mono text-slate-400 bg-surface-900 p-2 rounded-lg border border-surface-800 break-all">' +
-            c.jsonPointer +
-          '</div>' +
-          '<p class="text-xs text-rose-400/90 mt-2 font-sans bg-rose-950/20 p-2 rounded-lg border border-rose-900/30">' +
-            '<strong>Impact Reason:</strong> ' + c.reason +
-          '</p>' +
-        '</div>';
-      }).join('');
+      const analysisReplayList = document.getElementById('analysis-replay-list');
+      if (analysisReplayList) {
+        analysisReplayList.innerHTML = `
+          <div class="p-4 rounded-xl bg-[#0B1120] border border-rose-500/40 space-y-2 text-xs">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="badge-critical px-2 py-0.5 rounded font-mono font-bold">STRUCTURAL REGRESSION</span>
+                <span class="font-mono font-bold text-white">GET /api/v1/users/usr_1001</span>
+              </div>
+              <span class="font-mono text-[#9CA3AF]">45ms vs 42ms (+3ms)</span>
+            </div>
+            <p class="text-rose-300 font-mono text-[11px] bg-rose-950/20 p-2.5 rounded border border-rose-900/40">
+              Missing expected field 'name'. Received payload introduced 'fullName' instead.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl bg-[#0B1120] border border-rose-500/40 space-y-2 text-xs">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="badge-critical px-2 py-0.5 rounded font-mono font-bold">STRUCTURAL REGRESSION</span>
+                <span class="font-mono font-bold text-white">GET /api/v1/users/usr_1002</span>
+              </div>
+              <span class="font-mono text-[#9CA3AF]">41ms vs 38ms (+3ms)</span>
+            </div>
+            <p class="text-rose-300 font-mono text-[11px] bg-rose-950/20 p-2.5 rounded border border-rose-900/40">
+              Missing expected field 'name'. Downstream Order Service deserializer crashed with NullPointer.
+            </p>
+          </div>
+        `;
+      }
     }
 
-    function filterDiffChanges() {
-      var val = document.getElementById('diffFilter').value;
-      renderDiffChanges(val);
-    }
-
-    function renderTestCases() {
-      var container = document.getElementById('testCasesContainer');
-      if (!container) return;
-      container.innerHTML = fallbackTests.map(function(t) {
-        var resClass = t.result === 'PASSED' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400';
-        var selClass = t.selected ? 'bg-brand-600/20 text-brand-300 border border-brand-500/40' : 'bg-surface-800 text-slate-500';
-
-        return '<div class="p-4 rounded-xl bg-surface-850 border border-surface-800 flex items-center justify-between">' +
-          '<div class="space-y-1">' +
-            '<div class="flex items-center space-x-2">' +
-              '<span class="text-xs font-mono font-bold text-white">' + t.testId + '</span>' +
-              '<span class="text-xs text-slate-300 font-semibold">' + t.name + '</span>' +
-              '<span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-surface-800 text-slate-400">' + t.type + '</span>' +
-            '</div>' +
-            '<div class="text-xs text-slate-400">' +
-              'Service: <span class="text-brand-300">' + t.service + '</span> &bull; ' +
-              'Duration: <span class="font-mono">' + t.duration + 'ms</span> &bull; ' +
-              '<span>' + t.reason + '</span>' +
-            '</div>' +
-          '</div>' +
-          '<div class="flex items-center space-x-3">' +
-            '<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ' + resClass + '">' + t.result + '</span>' +
-            '<span class="px-2.5 py-1 rounded text-xs font-semibold ' + selClass + '">' + (t.selected ? 'SELECTED' : 'SKIPPED') + '</span>' +
-          '</div>' +
-        '</div>';
-      }).join('');
-    }
-
-    function renderReplayResults() {
-      var container = document.getElementById('replayResultsContainer');
-      if (!container) return;
-      container.innerHTML = fallbackReplay.map(function(r) {
-        return '<div class="p-4 rounded-xl bg-surface-850 border border-rose-500/30 space-y-2">' +
-          '<div class="flex items-center justify-between pb-2 border-b border-surface-800 text-xs">' +
-            '<div class="flex items-center space-x-2">' +
-              '<span class="px-2 py-0.5 rounded font-mono font-bold bg-rose-500/20 text-rose-300">' + r.regression + '</span>' +
-              '<span class="font-mono font-bold text-white">' + r.method + ' ' + r.path + '</span>' +
-            '</div>' +
-            '<span class="font-mono text-slate-400">' + r.latency + '</span>' +
-          '</div>' +
-          '<p class="text-xs text-rose-300/90 font-mono bg-rose-950/20 p-2.5 rounded-lg border border-rose-900/30">' +
-            r.summary +
-          '</p>' +
-        '</div>';
-      }).join('');
-    }
-
-    var graphNodesConfig = [
-      { id: "client_mobile", name: "Mobile App (iOS)", type: "CLIENT", x: 120, y: 150, impacted: true },
-      { id: "client_web", name: "Web Storefront", type: "CLIENT", x: 120, y: 350, impacted: false },
-      { id: "srv_user", name: "User Service", type: "SERVICE", x: 380, y: 150, impacted: true, isRootChange: true },
-      { id: "srv_order", name: "Order Service", type: "SERVICE", x: 380, y: 350, impacted: true },
-      { id: "srv_product", name: "Product Service", type: "SERVICE", x: 640, y: 80, impacted: false },
-      { id: "srv_inventory", name: "Inventory Service", type: "SERVICE", x: 640, y: 220, impacted: false },
-      { id: "srv_payment", name: "Payment Service", type: "SERVICE", x: 640, y: 350, impacted: false },
-      { id: "srv_notification", name: "Notification Service", type: "SERVICE", x: 640, y: 470, impacted: true },
-      { id: "srv_recommendation", name: "Recommendation", type: "SERVICE", x: 900, y: 150, impacted: true }
+    // Graph Drawing Engine (SVG / React Flow style)
+    const graphNodes = [
+      { id: 'client_mobile', name: 'Mobile App', type: 'CLIENT', x: 80, y: 140, impacted: true },
+      { id: 'client_web', name: 'Web Storefront', type: 'CLIENT', x: 80, y: 340, impacted: false },
+      { id: 'srv_user', name: 'User Service', type: 'SERVICE', x: 320, y: 140, impacted: true, isRoot: true },
+      { id: 'srv_order', name: 'Order Service', type: 'SERVICE', x: 320, y: 340, impacted: true },
+      { id: 'srv_product', name: 'Product Service', type: 'SERVICE', x: 560, y: 60, impacted: false },
+      { id: 'srv_inventory', name: 'Inventory Service', type: 'SERVICE', x: 560, y: 200, impacted: false },
+      { id: 'srv_payment', name: 'Payment Service', type: 'SERVICE', x: 560, y: 340, impacted: false },
+      { id: 'srv_notification', name: 'Notification Service', type: 'SERVICE', x: 560, y: 480, impacted: true },
+      { id: 'srv_recommendation', name: 'Recommendation', type: 'SERVICE', x: 800, y: 140, impacted: true }
     ];
 
-    var graphEdgesConfig = [
-      { source: "client_mobile", target: "srv_user", impacted: true },
-      { source: "client_web", target: "srv_order", impacted: false },
-      { source: "srv_order", target: "srv_user", impacted: true },
-      { source: "srv_order", target: "srv_inventory", impacted: false },
-      { source: "srv_order", target: "srv_payment", impacted: false },
-      { source: "srv_order", target: "srv_notification", impacted: true },
-      { source: "srv_recommendation", target: "srv_user", impacted: true },
-      { source: "srv_recommendation", target: "srv_product", impacted: false }
+    const graphEdges = [
+      { s: 'client_mobile', t: 'srv_user', impacted: true },
+      { s: 'client_web', t: 'srv_order', impacted: false },
+      { s: 'srv_order', t: 'srv_user', impacted: true },
+      { s: 'srv_order', t: 'srv_inventory', impacted: false },
+      { s: 'srv_order', t: 'srv_payment', impacted: false },
+      { s: 'srv_order', t: 'srv_notification', impacted: true },
+      { s: 'srv_recommendation', t: 'srv_user', impacted: true },
+      { s: 'srv_recommendation', t: 'srv_product', impacted: false }
     ];
 
-    var blastRadiusHighlighted = true;
+    let currentZoom = 1.0;
 
-    function renderDependencyGraph() {
-      var svg = document.getElementById('dependencySvg');
+    function renderDependencyGraphSvg() {
+      const svg = document.getElementById('main-dependency-svg');
       if (!svg) return;
       svg.innerHTML = '';
 
-      // Draw Edges
-      graphEdgesConfig.forEach(function(edge) {
-        var s = graphNodesConfig.find(function(n) { return n.id === edge.source; });
-        var t = graphNodesConfig.find(function(n) { return n.id === edge.target; });
-        if (!s || !t) return;
+      const gWrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      gWrapper.setAttribute('transform', `scale(${currentZoom})`);
 
-        var isHighlight = blastRadiusHighlighted && edge.impacted;
-        var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', s.x + 60);
-        line.setAttribute('y1', s.y + 25);
-        line.setAttribute('x2', t.x + 60);
-        line.setAttribute('y2', t.y + 25);
-        line.setAttribute('stroke', isHighlight ? '#f43f5e' : '#334155');
-        line.setAttribute('stroke-width', isHighlight ? '3' : '1.5');
-        if (isHighlight) {
-          line.setAttribute('stroke-dasharray', '5,5');
-        }
-        svg.appendChild(line);
+      // Draw Edges
+      graphEdges.forEach(e => {
+        const source = graphNodes.find(n => n.id === e.s);
+        const target = graphNodes.find(n => n.id === e.t);
+        if (!source || !target) return;
+
+        const isBlast = blastHighlightEnabled && e.impacted;
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', source.x + 65);
+        line.setAttribute('y1', source.y + 25);
+        line.setAttribute('x2', target.x + 65);
+        line.setAttribute('y2', target.y + 25);
+        line.setAttribute('stroke', isBlast ? '#EF4444' : '#374151');
+        line.setAttribute('stroke-width', isBlast ? '2.5' : '1.5');
+        if (isBlast) line.setAttribute('stroke-dasharray', '4,4');
+        gWrapper.appendChild(line);
       });
 
       // Draw Nodes
-      graphNodesConfig.forEach(function(node) {
-        var isImpacted = blastRadiusHighlighted && node.impacted;
-        var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        g.setAttribute('transform', 'translate(' + node.x + ', ' + node.y + ')');
-        g.setAttribute('class', 'cursor-pointer group');
-        g.onclick = function() { inspectNode(node); };
+      graphNodes.forEach(node => {
+        const isImpacted = blastHighlightEnabled && node.impacted;
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('transform', `translate(${node.x}, ${node.y})`);
+        g.setAttribute('class', 'cursor-pointer');
+        g.onclick = () => inspectGraphNode(node);
 
-        var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
         rect.setAttribute('width', '130');
         rect.setAttribute('height', '50');
-        rect.setAttribute('rx', '12');
-        rect.setAttribute('fill', isImpacted ? '#26131c' : '#111827');
-        rect.setAttribute('stroke', node.isRootChange ? '#f43f5e' : (isImpacted ? '#e11d48' : '#334155'));
+        rect.setAttribute('rx', '10');
+        rect.setAttribute('fill', isImpacted ? '#26131c' : '#1F2937');
+        rect.setAttribute('stroke', node.isRoot ? '#EF4444' : isImpacted ? '#F87171' : '#374151');
         rect.setAttribute('stroke-width', isImpacted ? '2' : '1');
         g.appendChild(rect);
 
-        var textName = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        const textName = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         textName.setAttribute('x', '12');
         textName.setAttribute('y', '22');
-        textName.setAttribute('fill', '#f8fafc');
+        textName.setAttribute('fill', '#F9FAFB');
         textName.setAttribute('font-size', '11');
         textName.setAttribute('font-weight', '700');
         textName.textContent = node.name;
         g.appendChild(textName);
 
-        var textType = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        const textType = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         textType.setAttribute('x', '12');
         textType.setAttribute('y', '38');
-        textType.setAttribute('fill', isImpacted ? '#fda4af' : '#64748b');
+        textType.setAttribute('fill', isImpacted ? '#FCA5A5' : '#9CA3AF');
         textType.setAttribute('font-size', '9');
         textType.setAttribute('font-weight', '600');
-        textType.textContent = isImpacted ? (node.isRootChange ? 'MODIFIED SOURCE' : 'BLAST RADIUS') : node.type;
+        textType.textContent = isImpacted ? (node.isRoot ? 'ROOT CHANGE' : 'BLAST RADIUS') : node.type;
         g.appendChild(textType);
 
-        svg.appendChild(g);
+        gWrapper.appendChild(g);
       });
+
+      svg.appendChild(gWrapper);
+      inspectGraphNode(graphNodes[2]); // Default inspect User Service
     }
 
-    function highlightImpactPath() {
-      blastRadiusHighlighted = !blastRadiusHighlighted;
-      renderDependencyGraph();
+    function renderAnalysisBlastGraph() {
+      const svg = document.getElementById('analysis-blast-svg');
+      if (!svg) return;
+      svg.innerHTML = '';
+      // Scaled version for analysis tab
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('transform', 'scale(0.85) translate(40, 20)');
+
+      graphEdges.filter(e => e.impacted).forEach(e => {
+        const s = graphNodes.find(n => n.id === e.s);
+        const t = graphNodes.find(n => n.id === e.t);
+        if (!s || !t) return;
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', s.x + 65);
+        line.setAttribute('y1', s.y + 25);
+        line.setAttribute('x2', t.x + 65);
+        line.setAttribute('y2', t.y + 25);
+        line.setAttribute('stroke', '#EF4444');
+        line.setAttribute('stroke-width', '2.5');
+        line.setAttribute('stroke-dasharray', '4,4');
+        g.appendChild(line);
+      });
+
+      graphNodes.filter(n => n.impacted).forEach(node => {
+        const nodeG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        nodeG.setAttribute('transform', `translate(${node.x}, ${node.y})`);
+
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('width', '130');
+        rect.setAttribute('height', '50');
+        rect.setAttribute('rx', '10');
+        rect.setAttribute('fill', '#26131c');
+        rect.setAttribute('stroke', node.isRoot ? '#EF4444' : '#F87171');
+        rect.setAttribute('stroke-width', '2');
+        nodeG.appendChild(rect);
+
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', '12');
+        txt.setAttribute('y', '22');
+        txt.setAttribute('fill', '#FFF');
+        txt.setAttribute('font-size', '11');
+        txt.setAttribute('font-weight', '700');
+        txt.textContent = node.name;
+        nodeG.appendChild(txt);
+
+        const sub = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        sub.setAttribute('x', '12');
+        sub.setAttribute('y', '38');
+        sub.setAttribute('fill', '#FCA5A5');
+        sub.setAttribute('font-size', '9');
+        sub.textContent = node.isRoot ? 'ROOT MUTATION' : 'AFFECTED CONSUMER';
+        nodeG.appendChild(sub);
+
+        g.appendChild(nodeG);
+      });
+
+      svg.appendChild(g);
     }
 
-    function resetGraph() {
-      blastRadiusHighlighted = true;
-      renderDependencyGraph();
-      closeInspector();
+    function toggleBlastHighlight() {
+      blastHighlightEnabled = !blastHighlightEnabled;
+      const btn = document.getElementById('blast-toggle-btn');
+      if (btn) {
+        btn.textContent = blastHighlightEnabled ? 'Toggle Blast Radius Highlight (Active)' : 'Toggle Blast Radius Highlight (Off)';
+      }
+      renderDependencyGraphSvg();
     }
 
-    function inspectNode(node) {
-      var panel = document.getElementById('nodeInspector');
-      var content = document.getElementById('inspectorContent');
-      if (!panel || !content) return;
-      panel.classList.remove('hidden');
-
-      var statusColor = node.impacted ? 'text-rose-400 font-semibold' : 'text-emerald-400 font-semibold';
-      var statusBadge = node.impacted ? '🚨 Inside Blast Radius' : '✅ Unaffected by Change';
-      var desc = node.impacted ? 'Depends directly or transitively on modified User Service contract.' : 'Independent subsystem with zero breaking upstream dependencies.';
-
-      content.innerHTML = '<div class="text-sm font-bold text-white">' + node.name + '</div>' +
-        '<div class="text-slate-400 font-mono">ID: ' + node.id + '</div>' +
-        '<div class="text-slate-400 font-mono">Type: ' + node.type + '</div>' +
-        '<div class="mt-2 pt-2 border-t border-surface-800 ' + statusColor + '">' + statusBadge + '</div>' +
-        '<p class="text-slate-300 mt-1">' + desc + '</p>';
+    function zoomGraph(factor) {
+      currentZoom = Math.max(0.5, Math.min(2.0, currentZoom * factor));
+      renderDependencyGraphSvg();
     }
 
-    function closeInspector() {
-      var panel = document.getElementById('nodeInspector');
-      if (panel) panel.classList.add('hidden');
+    function resetGraphView() {
+      currentZoom = 1.0;
+      blastHighlightEnabled = true;
+      renderDependencyGraphSvg();
     }
 
-    function runNewAnalysis() {
-      alert("Triggering C++20 Core Analysis Engine: Normalizing specs -> Generating Contract Diff -> Traversing Blast Radius -> Scoring Risk.");
-      showTab('risk');
+    function inspectGraphNode(node) {
+      const statusBadge = document.getElementById('drawer-node-status');
+      const content = document.getElementById('drawer-node-content');
+      if (!statusBadge || !content) return;
+
+      if (node.impacted) {
+        statusBadge.className = 'badge-critical px-1.5 py-0.5 rounded text-[9px] font-mono font-bold';
+        statusBadge.textContent = node.isRoot ? 'MUTATION ORIGIN' : 'BLAST RADIUS';
+      } else {
+        statusBadge.className = 'badge-low px-1.5 py-0.5 rounded text-[9px] font-mono font-bold';
+        statusBadge.textContent = 'UNAFFECTED';
+      }
+
+      content.innerHTML = `
+        <div>
+          <h4 class="text-sm font-bold text-white">${node.name}</h4>
+          <div class="text-[10px] font-mono text-[#9CA3AF]">Node ID: ${node.id} &bull; Type: ${node.type}</div>
+        </div>
+
+        <div class="p-3 rounded-lg bg-[#0B1120] border border-[#374151] space-y-1.5 font-mono text-[11px]">
+          <div class="text-[#9CA3AF]">In-Degree (Incoming): <span class="text-white">${graphEdges.filter(e => e.t === node.id).length}</span></div>
+          <div class="text-[#9CA3AF]">Out-Degree (Outgoing): <span class="text-white">${graphEdges.filter(e => e.s === node.id).length}</span></div>
+          <div class="text-[#9CA3AF]">Criticality Rating: <span class="text-amber-400 font-bold">${node.id === 'srv_order' ? 'CRITICAL' : 'HIGH'}</span></div>
+        </div>
+
+        <div class="space-y-1">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-white">Impact Analysis</span>
+          <p class="text-[11px] ${node.impacted ? 'text-rose-300' : 'text-[#9CA3AF]'} bg-[#111827] p-2.5 rounded border border-[#374151]">
+            ${node.impacted 
+              ? 'Component lies within the reverse reachability blast path of User Service v2.0 breaking changes.' 
+              : 'Independent subsystem. No direct or transitive execution dependencies on modified contracts.'}
+          </p>
+        </div>
+      `;
     }
 
-    function triggerReplayExecution() {
-      alert("Executing Request Replay against staging target: Headers redacted -> Replaying traffic -> Evaluating regression diffs.");
-      showTab('replay');
+    // Modal Form Submissions
+    function handleCreateProject(e) {
+      e.preventDefault();
+      const name = document.getElementById('new-proj-name').value;
+      const desc = document.getElementById('new-proj-desc').value;
+      const env = document.getElementById('new-proj-env').value;
+
+      demoProjectsData.push({
+        id: `proj_${Date.now()}`,
+        name,
+        slug: name.toLowerCase().replace(/\s+/g, '-'),
+        description: desc || 'Newly configured service workspace.',
+        servicesCount: 0,
+        operationsCount: 0,
+        risk: 'LOW',
+        env,
+        repo: ''
+      });
+
+      closeModal('modal-create-project');
+      renderProjectsList();
+      showToast(`Project '${name}' created successfully.`, 'success');
     }
 
-    function copyPrMarkdown() {
-      var report = "### 🔍 TraceWeaver API Change Impact Report\n\n" +
-                   "**Target Service**: User Service\n" +
-                   "**PR**: #42\n" +
-                   "**Risk Score**: 84.5 / 100 (CRITICAL)\n" +
-                   "**Blast Radius**: 3 Services, 1 Client\n" +
-                   "**Action**: Deployment BLOCKED.";
-      navigator.clipboard.writeText(report);
-      alert("Markdown report copied to clipboard!");
+    function handleAddService(e) {
+      e.preventDefault();
+      const name = document.getElementById('new-srv-name').value;
+      const criticality = document.getElementById('new-srv-criticality').value;
+
+      demoServicesData.push({
+        id: `srv_${Date.now()}`,
+        name,
+        env: 'production',
+        ops: 0,
+        deps: 0,
+        consumers: 0,
+        criticality,
+        spec: 'v1.0.0',
+        status: 'HEALTHY'
+      });
+
+      closeModal('modal-add-service');
+      renderServicesList();
+      showToast(`Microservice '${name}' registered in catalog.`, 'success');
     }
 
-    // Try fetching live data from backend to ensure real-time link
-    function testBackendConnectivity() {
-      fetch('/api/v1/health')
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-          var el = document.getElementById('backendStatusText');
-          if (el) el.textContent = 'Backend Online (Port 4000)';
-        })
-        .catch(function(err) {
-          // If viewing via file://, fallback data keeps UI fully functional
-          var el = document.getElementById('backendStatusText');
-          if (el) el.textContent = 'Standalone Mode (Active)';
-        });
+    function handleUploadSpec(e) {
+      e.preventDefault();
+      closeModal('modal-upload-spec');
+      showToast("OpenAPI specification validated and AST parsed with 0 errors.", "success");
+      navigateTo('specifications');
     }
 
-    // Auto-initialize
-    window.addEventListener('load', function() {
-      renderServices();
-      renderDiffChanges();
-      renderTestCases();
-      renderReplayResults();
-      renderDependencyGraph();
-      testBackendConnectivity();
+    function triggerAnalysisNow() {
+      showToast("Executing C++20 Core Analysis: AST parsed -> Diff calculated -> Blast radius traversed -> Risk evaluated.", "info");
+      navigateTo('analysis');
+    }
+
+    function triggerReplayNow() {
+      showToast("Executing Request Replay against staging: 2/2 requests failed due to missing UserProfile.name.", "danger");
+      navigateTo('replay');
+    }
+
+    function loadDemoProject() {
+      navigateTo('overview');
+      showToast("Demo E-Commerce workspace loaded successfully.", "success");
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      navigateTo('overview');
+      showToast("Signed in as Chethan Reddy.", "success");
+    }
+
+    function toggleNotifications() {
+      const el = document.getElementById('notifications-dropdown');
+      if (el) el.classList.toggle('hidden');
+    }
+
+    function exportFullMarkdownReport() {
+      const md = `# TraceWeaver API Change Impact Report
+- **Target Service**: User Service (v1.0.0 -> v2.0.0)
+- **Calculated Risk Score**: 84.5 / 100 (CRITICAL)
+- **Breaking Contract Changes**: 3
+  1. RESPONSE_FIELD_REMOVED: Property 'name' removed from UserProfile
+  2. RESPONSE_FIELD_TYPE_CHANGED: Property 'tier' mutated from string to integer
+  3. REQUIRED_REQUEST_FIELD_ADDED: Mandatory field 'ageVerification' added to registration
+- **Blast Radius**: Order Service, Notification Service, Recommendation Service, Mobile Client
+- **Replay Verification**: 2 historical production recordings failed on staging
+- **Deployment Action**: AUTOMATED DEPLOYMENT BLOCKED`;
+      navigator.clipboard.writeText(md);
+      showToast("Markdown Risk Report copied to clipboard!", "success");
+    }
+
+    function onProjectChange(val) {
+      activeProject = val;
+      const proj = demoProjectsData.find(p => p.id === val);
+      const breadcrumbEl = document.getElementById('breadcrumb-project');
+      if (breadcrumbEl && proj) breadcrumbEl.textContent = proj.name;
+      showToast(`Switched active project to ${proj ? proj.name : val}`, 'info');
+    }
+
+    function onEnvChange(val) {
+      showToast(`Active environment switched to '${val}'`, 'info');
+    }
+
+    function onGlobalSearch(query) {
+      if (!query.trim()) return;
+      showToast(`Filtering for '${query}'...`, 'info');
+    }
+
+    // Initialize App
+    window.addEventListener('load', () => {
+      // Check URL hash for initial route
+      const hash = window.location.hash.replace('#', '');
+      if (hash && document.getElementById(`page-${hash}`)) {
+        navigateTo(hash);
+      } else {
+        navigateTo('overview');
+      }
+
+      renderOverviewData();
+      renderProjectsList();
+      renderServicesList();
+      renderAnalysisChanges();
+      renderTestsList();
+      renderReplayPageData();
+      renderDependencyGraphSvg();
+
+      // Populate notification dropdown list
+      const nList = document.getElementById('notifications-list');
+      if (nList) {
+        nList.innerHTML = `
+          <div class="p-2 rounded bg-[#0B1120] border border-[#374151]">
+            <span class="text-rose-400 font-bold block">🚨 High Risk Analysis Alert</span>
+            <span class="text-[#9CA3AF] text-[11px]">User Service v2.0 scored 84.5/100.</span>
+          </div>
+          <div class="p-2 rounded bg-[#0B1120] border border-[#374151]">
+            <span class="text-amber-400 font-bold block">⚠️ PR #42 Scanned</span>
+            <span class="text-[#9CA3AF] text-[11px]">GitHub Action bot posted blast radius review.</span>
+          </div>
+        `;
+      }
     });
   </script>
 </body>
